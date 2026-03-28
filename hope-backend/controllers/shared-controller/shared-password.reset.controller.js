@@ -24,6 +24,8 @@ const getModelByRole = (role) => {
   switch (role) {
     case "SUPERADMIN":
       return SuperAdmin;   
+    case "USER":
+      return User;   
     default:
       throw new Error("Invalid role");
   }
