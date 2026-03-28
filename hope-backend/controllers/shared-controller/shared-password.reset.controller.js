@@ -10,6 +10,7 @@ const {
   resetUserPassword,
 } = require("../../services/password-service/password.service");
 const SuperAdmin = require("../../models/super-admin-model/super-admin.model");
+const User = require("../../models/user-model/user.model");
 const {
   sendPasswordResetEmail,
 } = require("../../helpers/email-helper/email.helper");
