@@ -319,6 +319,8 @@ exports.updateProfile = async (req, res) => {
     }
 
     if (req.body.userName) user.userName = req.body.userName.trim();
+    if (req.body.bio) user.bio = req.body.bio.trim();
+    if (req.body.gender) user.gender = req.body.gender.trim();
 
     // Handle phone update (partial allowed)
     if (req.body.phone) {

@@ -89,13 +89,13 @@ const Signin = () => {
 
         Toast.show({
           type: 'success',
-          text1: 'Sucess',
+          text1: 'Success',
           text2: message,
         });
 
-        // setTimeout(() => {
-        //   navigation.replace('Main');
-        // }, 1200);
+        setTimeout(() => {
+          navigation.replace('Main');
+        }, 1200);
 
         setEmail('');
         setPassword('');

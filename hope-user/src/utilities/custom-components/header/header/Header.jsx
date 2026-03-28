@@ -26,59 +26,49 @@ import {
   View,
   Text,
   Image,
-  Dimensions,
   StyleSheet,
-  TouchableOpacity,
+  Dimensions,
   Animated,
 } from 'react-native';
-import LinearGradient from 'react-native-linear-gradient';
 import MaterialCommunityIcons from 'react-native-vector-icons/MaterialCommunityIcons';
 import { theme } from '../../../../styles/Themes';
+import InputField from '../../input-field/InputField.utility';
 
 const { width, height } = Dimensions.get('window');
 
 const Header = ({
-  title,
-  logo,
-  leftIcon,
-  onPressLeft,
-  rightIcon,
-  onPressRight,
+  userName = '',
+  userAvatar,
+  searchQuery,
+  setSearchQuery,
+  showSearch = true, // Default to true
+  showTopRow = true, // Default to true for Date/Emoji
 }) => {
   const fadeAnim = useRef(new Animated.Value(0)).current;
-  const scaleAnim = useRef(new Animated.Value(0.96)).current;
-  const translateY = useRef(new Animated.Value(-60)).current;
+  const translateY = useRef(new Animated.Value(-30)).current;
 
   useEffect(() => {
     Animated.parallel([
       Animated.timing(fadeAnim, {
         toValue: 1,
-        duration: 1000,
-        useNativeDriver: true,
-      }),
-      Animated.spring(scaleAnim, {
-        toValue: 1,
-        friction: 7,
-        tension: 100,
+        duration: 800,
         useNativeDriver: true,
       }),
       Animated.spring(translateY, {
         toValue: 0,
         friction: 8,
-        tension: 120,
+        tension: 80,
         useNativeDriver: true,
       }),
     ]).start();
   }, []);
 
-  const renderIcon = iconSource => {
-    if (!iconSource) return null;
-    if (React.isValidElement(iconSource)) return iconSource;
-    return <Image source={iconSource} style={styles.icon} />;
-  };
-
-  const leftContent = leftIcon || (onPressLeft ? true : false);
-  const rightContent = rightIcon;
+  const currentDate = new Date().toLocaleDateString('en-US', {
+    weekday: 'short',
+    day: 'numeric',
+    month: 'short',
+    year: 'numeric',
+  });
 
   return (
     <Animated.View
@@ -86,42 +76,56 @@ const Header = ({
         styles.headerContainer,
         {
           opacity: fadeAnim,
-          transform: [{ scale: scaleAnim }, { translateY }],
+          transform: [{ translateY }],
         },
       ]}
     >
-      <LinearGradient
-        colors={[
-          theme.colors.primary,
-          theme.colors.secondary || theme.colors.primary,
-        ]}
-        start={{ x: 0, y: 0 }}
-        end={{ x: 1, y: 1 }}
-        style={styles.gradientBackground}
-      >
-        <View style={styles.leftGroup}>
-          {logo && (
-            <Image source={logo} style={styles.logo} resizeMode="contain" />
-          )}
-          {title && (
-            <Text style={[styles.title, !logo && styles.titleLarge]}>
-              {title}
-            </Text>
-          )}
-        </View>
-
-        {rightContent && (
-          <View style={styles.rightGroup}>
-            <TouchableOpacity
-              onPress={onPressRight}
-              activeOpacity={0.8}
-              disabled={!onPressRight}
-            >
-              {renderIcon(rightIcon)}
-            </TouchableOpacity>
+      {/* Conditional Top Section */}
+      {showTopRow && (
+        <View style={styles.topRow}>
+          <View style={styles.dateContainer}>
+            <Text style={styles.emoji}>👑</Text>
+            <Text style={styles.dateText}>{currentDate}</Text>
           </View>
-        )}
-      </LinearGradient>
+        </View>
+      )}
+
+      {/* Greeting + Avatar */}
+      <View style={styles.greetingRow}>
+        <Image
+          source={
+            userAvatar && userAvatar.length > 0
+              ? { uri: userAvatar }
+              : require('../../../../assets/placeHolder/placeholder.png')
+          }
+          style={styles.avatar}
+        />
+
+        <View style={styles.greetingTextContainer}>
+          <Text style={styles.greeting}>
+            Hi, <Text style={styles.name}>{userName}</Text>!
+          </Text>
+        </View>
+      </View>
+
+      {/* Conditional Search Bar */}
+      {showSearch && (
+        <View style={styles.searchWrapper}>
+          <InputField
+            placeholder="Search anything..."
+            value={searchQuery}
+            onChangeText={setSearchQuery}
+            containerStyle={styles.inputCustomStyle}
+            leftIcon={
+              <MaterialCommunityIcons
+                name="magnify"
+                size={22}
+                color={theme.colors.primary}
+              />
+            }
+          />
+        </View>
+      )}
     </Animated.View>
   );
 };
@@ -130,65 +134,74 @@ export default Header;
 
 const styles = StyleSheet.create({
   headerContainer: {
-    width: '100%',
-    borderBottomLeftRadius: theme.borderRadius.xl || 28,
-    borderBottomRightRadius: theme.borderRadius.xl || 28,
-    overflow: 'hidden',
-    elevation: 12,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 10 },
-    shadowOpacity: 0.2,
-    shadowRadius: 25,
-  },
-
-  gradientBackground: {
-    position: 'relative',
-    height: height * 0.1,
+    backgroundColor: theme.colors.primary,
+    paddingTop: height * 0.06,
     paddingHorizontal: width * 0.06,
-    alignItems: 'center',
+    paddingBottom: height * 0.02,
+    borderBottomLeftRadius: theme.borderRadius.circle,
+    borderBottomRightRadius: theme.borderRadius.circle,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 12 },
+    shadowOpacity: 0.25,
+    shadowRadius: 20,
+    elevation: 15,
   },
 
-  rightGroup: {
-    position: 'absolute',
-    right: width * 0.06,
-    top: 0,
-    bottom: 0,
-    justifyContent: 'center',
-  },
-
-  leftGroup: {
-    position: 'absolute',
-    top: height * 0.026,
-    bottom: 0,
-    left: width * 0.04,
-    justifyContent: 'center',
+  topRow: {
     flexDirection: 'row',
-    alignSelf: 'flex-start',
+    justifyContent: 'space-between',
     alignItems: 'center',
-    gap: width * 0.03,
+    marginBottom: height * 0.02,
   },
 
-  logo: {
-    width: width * 0.22,
-    height: width * 0.22,
-    resizeMode: 'contain',
+  dateContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: theme.gap(1),
   },
 
-  title: {
+  emoji: {
+    fontSize: theme.typography.fontSize.sm,
+  },
+
+  dateText: {
+    fontSize: theme.typography.fontSize.sm,
+    fontFamily: theme.typography.medium,
+    color: theme.colors.white,
+  },
+
+  greetingRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: height * 0.01,
+    marginTop: height * 0.01,
+  },
+
+  avatar: {
+    width: width * 0.14,
+    height: width * 0.14,
+    borderRadius: width * 0.07,
+    borderWidth: 3,
+    borderColor: '#E8D5B8',
+  },
+
+  greetingTextContainer: {
+    marginLeft: width * 0.04,
+  },
+
+  greeting: {
     fontSize: theme.typography.fontSize.lg,
     fontFamily: theme.typography.semiBold,
     color: theme.colors.white,
-    textAlign: 'center',
+    lineHeight: 32,
   },
 
-  titleLarge: {
-    fontSize: theme.typography.fontSize.xl,
+  name: {
+    color: '#F5BE40',
   },
 
-  icon: {
-    width: width * 0.075,
-    height: width * 0.075,
-    tintColor: theme.colors.white,
-    resizeMode: 'contain',
+  inputCustomStyle: {
+    backgroundColor: theme.colors.white,
+    height: height * 0.06,
   },
 });

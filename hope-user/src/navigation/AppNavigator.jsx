@@ -31,6 +31,12 @@ import Signin from '../screens/auth/Signin/Signin';
 import Signup from '../screens/auth/Signup/Signup';
 import ForgotPassword from '../screens/auth/Forgot-Password/ForgotPassword';
 
+// Main Application
+import BottomNavigator from '../navigation/bottom-navigator/BottomNavigator';
+
+//Profile & Sub-screens
+import MyProfile from '../screens/profile-screen/sub-screens/MyProfile';
+
 const Stack = createNativeStackNavigator();
 
 const AppNavigator = () => {
@@ -72,8 +78,24 @@ const AppNavigator = () => {
           {props => <Signup {...props} setStatusBarColor={setStatusBarColor} />}
         </Stack.Screen>
 
-         <Stack.Screen name="Forgot_Password">
-          {props => <ForgotPassword {...props} setStatusBarColor={setStatusBarColor} />}
+        <Stack.Screen name="Forgot_Password">
+          {props => (
+            <ForgotPassword {...props} setStatusBarColor={setStatusBarColor} />
+          )}
+        </Stack.Screen>
+
+        {/* --- MAIN APPLICATION ENTRY --- */}
+        <Stack.Screen name="Main">
+          {props => (
+            <BottomNavigator {...props} setStatusBarColor={setStatusBarColor} />
+          )}
+        </Stack.Screen>
+
+        {/* --- PROFILE & SUBSCREENS --- */}
+        <Stack.Screen name="My_Profile">
+          {props => (
+            <MyProfile {...props} setStatusBarColor={setStatusBarColor} />
+          )}
         </Stack.Screen>
       </Stack.Navigator>
     </>
