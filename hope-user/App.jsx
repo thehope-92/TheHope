@@ -65,8 +65,8 @@ const CustomToast = type => props => {
         fontFamily: theme.typography.semiBold,
         color: theme.colors.dark,
       }}
-      text1NumberOfLines={2}
-      text2NumberOfLines={3}
+      text1NumberOfLines={3}
+      text2NumberOfLines={5}
       renderLeadingIcon={() => (
         <MaterialCommunityIcons
           name={iconName}

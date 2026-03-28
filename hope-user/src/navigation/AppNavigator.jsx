@@ -36,6 +36,10 @@ import BottomNavigator from '../navigation/bottom-navigator/BottomNavigator';
 
 //Profile & Sub-screens
 import MyProfile from '../screens/profile-screen/sub-screens/MyProfile';
+import About from '../screens/profile-screen/sub-screens/About';
+
+// Mood Tracking Screens
+import CreateMood from '../screens/mood-tracker-screen/CreateMood/CreateMood';
 
 const Stack = createNativeStackNavigator();
 
@@ -95,6 +99,17 @@ const AppNavigator = () => {
         <Stack.Screen name="My_Profile">
           {props => (
             <MyProfile {...props} setStatusBarColor={setStatusBarColor} />
+          )}
+        </Stack.Screen>
+
+        <Stack.Screen name="About_Us">
+          {props => <About {...props} setStatusBarColor={setStatusBarColor} />}
+        </Stack.Screen>
+
+        {/* --- MOOD TRACKING SCREENS --- */}
+        <Stack.Screen name="Create_Mood">
+          {props => (
+            <CreateMood {...props} setStatusBarColor={setStatusBarColor} />
           )}
         </Stack.Screen>
       </Stack.Navigator>

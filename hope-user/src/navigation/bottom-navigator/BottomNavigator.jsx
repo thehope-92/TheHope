@@ -15,6 +15,7 @@ import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import { theme } from '../../styles/Themes';
 import Home from '../../screens/dashboard/Main';
 import Profile from '../../screens/profile-screen/Profile';
+import MyMood from '../../screens/mood-tracker-screen/Moods/MyMood';
 
 const Tab = createBottomTabNavigator();
 const { width, height } = Dimensions.get('window');
@@ -76,6 +77,24 @@ const BottomNavigator = () => {
                 focused
                   ? require('../../assets/navigatorIcons/home-filled.png')
                   : require('../../assets/navigatorIcons/home.png')
+              }
+            />
+          ),
+        }}
+      />
+
+      <Tab.Screen
+        name="MoodTracker"
+        component={MyMood}
+        options={{
+          tabBarLabel: 'Mood Tracker',
+          tabBarIcon: ({ focused }) => (
+            <AnimatedTabIcon
+              focused={focused}
+              source={
+                focused
+                  ? require('../../assets/navigatorIcons/mood-filled.png')
+                  : require('../../assets/navigatorIcons/mood.png')
               }
             />
           ),

@@ -401,7 +401,7 @@ const MyProfile = () => {
             }}
           />
           <DetailRow
-            icon="user"
+            icon="account-circle"
             label="Bio"
             value={user?.bio}
             isEditable

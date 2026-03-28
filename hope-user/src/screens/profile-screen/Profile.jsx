@@ -23,6 +23,8 @@ import {
   StatusBar,
   Text,
   ScrollView,
+  Linking,
+  TouchableOpacity,
 } from 'react-native';
 import MaterialCommunityIcons from 'react-native-vector-icons/MaterialCommunityIcons';
 import { theme } from '../../styles/Themes';
@@ -47,6 +49,7 @@ const Profile = () => {
 
   const [loading, setLoading] = useState(false);
   const [showDeleteModal, setShowDeleteModal] = useState(false);
+  const [showSupportModal, setShowSupportModal] = useState(false);
   const [deleteReason, setDeleteReason] = useState('');
 
   useEffect(() => {
@@ -176,7 +179,7 @@ const Profile = () => {
           <ProfileCard
             title="Support Center"
             iconName="headphones"
-            navigationTarget={'Support_Center'}
+            onPressFunction={() => setShowSupportModal(true)} // Changed this line
           />
           <ProfileCard
             title="About Us"
@@ -258,6 +261,95 @@ const Profile = () => {
           </View>
         </View>
       </Modal>
+
+      <Modal
+        isOpen={showSupportModal}
+        onClose={() => setShowSupportModal(false)}
+        showCloseButton={true}
+      >
+        <View style={styles.enhancedModalContent}>
+          {/* Calm Wellness Icon */}
+          <View style={styles.supportIconWrapper}>
+            <MaterialCommunityIcons
+              name="headset"
+              size={70}
+              color={theme.colors.primary}
+            />
+          </View>
+
+          <Text style={styles.supportTitle}>We’re here for you</Text>
+          <Text style={styles.supportSubtitle}>
+            At The Hope, your peace of mind matters most. Reach out anytime —
+            we’re listening with care and compassion.
+          </Text>
+
+          {/* WhatsApp Card */}
+          <TouchableOpacity
+            style={styles.contactCard}
+            activeOpacity={0.85}
+            onPress={() =>
+              Linking.openURL('whatsapp://send?phone=+923090207411')
+            }
+          >
+            <View
+              style={[styles.contactIconBg, { backgroundColor: '#E8F5E9' }]}
+            >
+              <MaterialCommunityIcons
+                name="whatsapp"
+                size={34}
+                color="#25D366"
+              />
+            </View>
+            <View style={styles.contactTextContainer}>
+              <Text style={styles.contactMethod}>Chat on WhatsApp</Text>
+              <Text style={styles.contactDetail}>+92 309 020 7411</Text>
+              <Text style={styles.responseTag}>Usually replies in minutes</Text>
+            </View>
+            <MaterialCommunityIcons
+              name="chevron-right"
+              size={26}
+              color="#BDBDBD"
+            />
+          </TouchableOpacity>
+
+          {/* Email Card */}
+          <TouchableOpacity
+            style={styles.contactCard}
+            activeOpacity={0.85}
+            onPress={() =>
+              Linking.openURL('mailto:support.thehope92@gmail.com')
+            }
+          >
+            <View
+              style={[styles.contactIconBg, { backgroundColor: '#E3F2FD' }]}
+            >
+              <MaterialCommunityIcons
+                name="email-outline"
+                size={34}
+                color="#2196F3"
+              />
+            </View>
+            <View style={styles.contactTextContainer}>
+              <Text style={styles.contactMethod}>Send us an Email</Text>
+              <Text style={styles.contactDetail}>
+                support.thehope92@gmail.com
+              </Text>
+              <Text style={styles.responseTag}>We reply within 24 hours</Text>
+            </View>
+            <MaterialCommunityIcons
+              name="chevron-right"
+              size={26}
+              color="#BDBDBD"
+            />
+          </TouchableOpacity>
+
+          {/* Privacy & Care Note */}
+          <Text style={styles.privacyNote}>
+            All conversations are completely private and confidential • Your
+            healing journey is safe with us
+          </Text>
+        </View>
+      </Modal>
     </View>
   );
 };
@@ -312,7 +404,7 @@ const styles = StyleSheet.create({
   modalTitle: {
     fontSize: theme.typography.fontSize.xl,
     fontFamily: theme.typography.bold,
-    color: theme.colors.primary,
+    color: theme.colors.white,
     textAlign: 'center',
     marginBottom: height * 0.015,
   },
@@ -345,5 +437,87 @@ const styles = StyleSheet.create({
     width: width * 0.86,
     flexDirection: 'row',
     justifyContent: 'space-around',
+  },
+
+  supportIconWrapper: {
+    width: width * 0.22,
+    height: width * 0.22,
+    backgroundColor: '#F4F5F7',
+    borderRadius: theme.borderRadius.circle,
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginBottom: height * 0.02,
+    shadowColor: theme.colors.primary,
+    shadowOffset: { width: 0, height: 6 },
+    shadowOpacity: 0.15,
+    shadowRadius: 10,
+    elevation: 8,
+  },
+
+  supportTitle: {
+    fontSize: theme.typography.fontSize.xl,
+    fontFamily: theme.typography.bold,
+    color: theme.colors.white,
+    textAlign: 'center',
+    marginBottom: height * 0.01,
+  },
+
+  supportSubtitle: {
+    fontSize: theme.typography.fontSize.sm,
+    fontFamily: theme.typography.regular,
+    color: theme.colors.gray,
+    textAlign: 'center',
+    marginBottom: height * 0.035,
+    paddingHorizontal: width * 0.05,
+    lineHeight: 22,
+  },
+
+  contactCard: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    width: '100%',
+    backgroundColor: theme.colors.white,
+    padding: width * 0.04,
+    borderRadius: theme.borderRadius.large,
+    marginBottom: height * 0.015,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.06,
+    shadowRadius: 8,
+    elevation: 4,
+    borderWidth: 1,
+    borderColor: '#F0F0F0',
+  },
+
+  contactIconBg: {
+    width: width * 0.12,
+    height: width * 0.12,
+    borderRadius: width * 0.06,
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginRight: width * 0.02,
+  },
+
+  contactTextContainer: {
+    flex: 1,
+  },
+
+  contactMethod: {
+    fontSize: theme.typography.fontSize.md,
+    fontFamily: theme.typography.semiBold,
+    color: theme.colors.dark,
+    marginBottom: height * 0.005,
+  },
+
+  contactDetail: {
+    fontSize: theme.typography.fontSize.sm,
+    fontFamily: theme.typography.regular,
+    color: theme.colors.dark,
+  },
+
+  responseTag: {
+    fontSize: theme.typography.fontSize.xs,
+    fontFamily: theme.typography.semiBold,
+    color: theme.colors.dark,
   },
 });

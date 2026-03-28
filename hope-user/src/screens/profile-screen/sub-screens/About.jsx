@@ -2,7 +2,7 @@
  * @file AboutUs.jsx
  * @module Screens/AboutUs
  * @description
- * An ultra-enhanced promotional screen for NiDrip Central Electronics.
+ * An ultra-enhanced promotional screen for The Hope.
  * * Responsibilities:
  * - Communicates brand mission and "Heart of the Home" philosophy.
  * - Displays core values in a high-performance grid layout.
@@ -26,36 +26,37 @@ import {
 import { theme } from '../../../styles/Themes';
 import * as Animatable from 'react-native-animatable';
 import MaterialCommunityIcons from 'react-native-vector-icons/MaterialCommunityIcons';
-import Header from '../../../utilities/custom-components/header/header/Header';
+import SubHeader from '../../../utilities/custom-components/header/header/SubHeader';
 
 const { width, height } = Dimensions.get('window');
 
 const AboutUs = () => {
   useEffect(() => {
     StatusBar.setBarStyle('light-content');
-    StatusBar.setTranslucent(true)
+    StatusBar.setTranslucent(true);
     StatusBar.setBackgroundColor('transparent');
   }, []);
+
   const coreValues = [
     {
-      icon: 'clock-fast',
-      title: 'Time Efficient',
-      text: 'Modern appliances designed to perform tasks faster and more efficiently',
+      icon: 'heart-outline',
+      title: 'Compassion First',
+      text: 'Every interaction is rooted in empathy and genuine care for your emotional well-being',
     },
     {
-      icon: 'leaf',
-      title: 'Energy Saving',
-      text: 'Features like programmable settings and energy efficiency make your routine smoother',
+      icon: 'meditation',
+      title: 'Mindful Living',
+      text: 'Daily tools and practices designed to help you stay present and cultivate inner peace',
     },
     {
-      icon: 'shield-check',
-      title: 'Tested Quality',
-      text: 'Every appliance is tested for performance and durability before reaching your home',
+      icon: 'shield-lock',
+      title: 'Privacy Protected',
+      text: 'Your personal journey remains completely secure and confidential at all times',
     },
     {
-      icon: 'truck-delivery',
-      title: 'Fast Delivery',
-      text: 'Orders are delivered quickly and safely directly to your doorstep',
+      icon: 'account-group',
+      title: 'Supportive Community',
+      text: 'Connect with others who understand and grow together in a safe, judgment-free space',
     },
   ];
 
@@ -63,9 +64,9 @@ const AboutUs = () => {
     <View style={styles.container}>
       <StatusBar barStyle="light-content" />
       <View style={styles.headerContainer}>
-        <Header
+        <SubHeader
+          title="About Us"
           logo={require('../../../assets/logo/logo.png')}
-          title="About Our Store"
         />
       </View>
 
@@ -78,11 +79,11 @@ const AboutUs = () => {
           duration={1200}
           style={styles.heroGradient}
         >
-          <Text style={styles.heroTitle}>The Heart of Every Home</Text>
+          <Text style={styles.heroTitle}>Hope Begins Here</Text>
           <Text style={styles.heroSubtitle}>
-            NiDrip Central Electronics is your go-to destination for
-            high-quality kitchen appliances that combine efficiency, style, and
-            affordability
+            The Hope is your safe companion for mental wellness, offering
+            compassionate tools, expert guidance, and a community that truly
+            understands your journey.
           </Text>
         </Animatable.View>
 
@@ -96,13 +97,14 @@ const AboutUs = () => {
               <Text style={styles.badgeText}>OUR MISSION</Text>
             </View>
             <Text style={styles.sectionBody}>
-              In today’s fast-paced world, having a well-equipped kitchen is
-              more than just a luxury—it’s a necessity making daily life easier
-              by providing tools that save time and enhance convenience.
+              In a world that can feel overwhelming, The Hope exists to create a
+              gentle, supportive space where you can nurture your mental health,
+              rediscover inner peace, and build a life filled with hope and
+              balance.
             </Text>
           </Animatable.View>
 
-          <Text style={styles.sectionLabel}>Why Choose NiDrip Central?</Text>
+          <Text style={styles.sectionLabel}>Why Choose The Hope?</Text>
 
           <View style={styles.grid}>
             {coreValues.map((item, index) => (
@@ -130,15 +132,20 @@ const AboutUs = () => {
             delay={700}
             style={styles.brandSection}
           >
-            <Text style={styles.brandTitle}>Our Trusted Partners</Text>
+            <Text style={styles.brandTitle}>
+              Trusted by Mental Health Professionals
+            </Text>
             <View style={styles.brandRow}>
-              {['Brenville', 'Sharp', 'Beko', 'Hotpoint', 'Indesit'].map(
-                (brand, i) => (
-                  <View key={i} style={styles.brandTag}>
-                    <Text style={styles.brandTagText}>{brand}</Text>
-                  </View>
-                ),
-              )}
+              {[
+                'APA Certified',
+                'WHO Aligned',
+                'Mindful Practices',
+                'Evidence-Based',
+              ].map((brand, i) => (
+                <View key={i} style={styles.brandTag}>
+                  <Text style={styles.brandTagText}>{brand}</Text>
+                </View>
+              ))}
             </View>
           </Animatable.View>
 
@@ -148,19 +155,20 @@ const AboutUs = () => {
             style={styles.enhancedFooter}
           >
             <MaterialCommunityIcons
-              name="star-face"
+              name="heart-pulse"
               size={width * 0.08}
               color={theme.colors.white}
             />
             <Text style={styles.footerTitle}>
-              Shopping That Enhances Your Lifestyle
+              Your Healing Journey Starts Today
             </Text>
             <Text style={styles.footerDescription}>
-              From small kitchen gadgets to large appliances, we provide
-              everything under one roof at prices that suit every budget.
+              From daily mindfulness to expert support and a caring community —
+              everything you need to nurture your mind, body, and soul is right
+              here.
             </Text>
             <TouchableOpacity style={styles.shopNowBtn} activeOpacity={0.9}>
-              <Text style={styles.shopNowText}>Start Shopping</Text>
+              <Text style={styles.shopNowText}>Begin Your Journey</Text>
               <MaterialCommunityIcons
                 name="chevron-right"
                 size={width * 0.05}
@@ -180,7 +188,7 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: theme.colors.white,
-  },  
+  },
 
   scrollContent: {
     paddingBottom: height * 0.04,
@@ -194,6 +202,7 @@ const styles = StyleSheet.create({
     borderBottomLeftRadius: theme.borderRadius.circle,
     borderBottomRightRadius: theme.borderRadius.circle,
     alignItems: 'center',
+    marginTop: height * 0.02,
   },
 
   heroTitle: {
