@@ -16,9 +16,9 @@
 
 const CONFIG = {
   /** Dev Backend API Url */
-  BACKEND_API_URL: 'http://192.168.1.10:8000/api',
+  // BACKEND_API_URL: 'http://192.168.1.10:8000/api',
   /** Prod Backend API Url */
-  // BACKEND_API_URL: "https://the-hope-backend.vercel.app/api",
+  BACKEND_API_URL: "https://the-hope-backend.vercel.app/api",
 };
 
 export default CONFIG;

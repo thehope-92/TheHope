@@ -69,7 +69,7 @@ exports.createMoodEntry = async (req, res) => {
 
     res.status(201).json({
       success: true,
-      message: "Mood created and synced successfully",
+      message: "Mood created successfully",
       mood: savedMood,
     });
   } catch (error) {
@@ -173,7 +173,7 @@ exports.deleteMoodEntry = async (req, res) => {
 
     res.status(200).json({
       success: true,
-      message: "Mood deleted and user logs synced successfully",
+      message: "Mood deleted successfully",
     });
   } catch (error) {
     console.error("Delete mood error:", error);
