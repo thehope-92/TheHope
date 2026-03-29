@@ -41,6 +41,11 @@ import About from '../screens/profile-screen/sub-screens/About';
 // Mood Tracking Screens
 import CreateMood from '../screens/mood-tracker-screen/CreateMood/CreateMood';
 
+// Articles Screens
+import AllCategories from '../screens/articles-screen/all-categories-screen/AllCategories';
+import ArticleCategory from '../screens/articles-screen/article-category-screen/ArticleCategory';
+import ArticleDetails from '../screens/articles-screen/article-detail-screen/ArticleDetails';
+
 const Stack = createNativeStackNavigator();
 
 const AppNavigator = () => {
@@ -110,6 +115,26 @@ const AppNavigator = () => {
         <Stack.Screen name="Create_Mood">
           {props => (
             <CreateMood {...props} setStatusBarColor={setStatusBarColor} />
+          )}
+        </Stack.Screen>
+
+
+        {/* --- ARTICLES SCREENS --- */}
+        <Stack.Screen name="All_Categories">
+          {props => (
+            <AllCategories {...props} setStatusBarColor={setStatusBarColor} />
+          )}
+        </Stack.Screen>
+
+        <Stack.Screen name="Article_Category">
+          {props => (
+            <ArticleCategory {...props} setStatusBarColor={setStatusBarColor} />
+          )}
+        </Stack.Screen>
+
+        <Stack.Screen name="Article_Detail">
+          {props => (
+            <ArticleDetails {...props} setStatusBarColor={setStatusBarColor} />
           )}
         </Stack.Screen>
       </Stack.Navigator>

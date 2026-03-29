@@ -51,6 +51,7 @@ const Home = () => {
       <Header
         userName={profile?.userName || 'User'}
         userAvatar={profile?.profilePicture}
+        placeholder={'Search anything.....'}
         searchQuery={searchQuery}
         setSearchQuery={setSearchQuery}
       />

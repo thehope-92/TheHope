@@ -111,7 +111,6 @@ exports.createArticle = async (req, res) => {
   }
 };
 
-
 /**
  * Get single article details
  * @param {string} articleId
@@ -143,14 +142,15 @@ exports.getArticleById = async (req, res) => {
 };
 
 /**
- * Update article details with category re-validation
+ * Update article details with category re-validation + thumbnail support
  * @access Private (Super Admin)
  */
 exports.updateArticle = async (req, res) => {
   try {
     const { articleId } = req.params;
-    const updates = req.body;
+    const updates = { ...req.body };
 
+    // Category validation
     if (updates.category) {
       updates.category = updates.category.toUpperCase().trim();
       if (!FLAT_CATEGORIES.includes(updates.category)) {
@@ -160,23 +160,59 @@ exports.updateArticle = async (req, res) => {
       }
     }
 
+    // Fetch existing article to handle old thumbnail deletion
+    const existingArticle = await InformationLibrary.findById(articleId);
+    if (!existingArticle) {
+      return res
+        .status(404)
+        .json({ success: false, message: "Article not found" });
+    }
+
+    // ====================== THUMBNAIL UPDATE ======================
+    if (req.files?.thumbnail && req.files.thumbnail.length > 0) {
+      // Upload all new thumbnail images to Cloudinary
+      const uploadPromises = req.files.thumbnail.map((file) =>
+        uploadToCloudinary(
+          file,
+          "informationLibraryThumbnails/thumbnails", // ← matches your existing folder
+        ),
+      );
+
+      const uploadResults = await Promise.all(uploadPromises);
+      const newThumbnailUrls = uploadResults.map((result) => result.url);
+
+      // Delete old thumbnails from Cloudinary (optional but recommended)
+      if (existingArticle.thumbnail && existingArticle.thumbnail.length > 0) {
+        const deletePromises = existingArticle.thumbnail.map((url) =>
+          deleteFromCloudinary(url).catch(console.error),
+        );
+        await Promise.all(deletePromises);
+      }
+
+      // Replace thumbnail array with new URLs
+      updates.thumbnail = newThumbnailUrls;
+    }
+
+    // ====================== UPDATE ARTICLE ======================
     const updatedArticle = await InformationLibrary.findByIdAndUpdate(
       articleId,
       { $set: updates },
       { new: true, runValidators: true },
-    );
+    ).populate("addedBy", "userName bio profilePicture");
 
-    if (!updatedArticle)
+    if (!updatedArticle) {
       return res
         .status(404)
         .json({ success: false, message: "Article not found" });
+    }
 
     res.status(200).json({
       success: true,
-      message: "Article updated",
-      article: updatedArticle,
+      message: "Article updated successfully",
+      updatedArticle,
     });
   } catch (error) {
+    console.error("Update Article Error:", error);
     res.status(500).json({ success: false, message: "Update failed" });
   }
 };

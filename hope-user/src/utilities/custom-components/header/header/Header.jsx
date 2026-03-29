@@ -2,23 +2,8 @@
  * @file Header.js
  * @module Header
  * @description
- * A highly customizable and animated header component for React Native applications.
- * Features:
- * - Premium entrance animation (slide down spring + fade + subtle scale)
- * - Diagonal gradient background with themed colors
- * - Perfect centering using absolute positioning (unaffected by left/right content)
- * - Default back arrow on left if onPressLeft provided but no leftIcon
- * - Responsive sizing with larger title when no logo
- * - Support for image sources or custom React elements for icons
- * - Enhanced shadows and rounded bottom corners
- * @param {Object} props - Component props
- * @param {string} [props.title] - The text to display in the center
- * @param {number|Object} [props.logo] - Image source for the central logo
- * @param {number|Object|React.ReactElement} [props.leftIcon] - Left icon/element
- * @param {Function} [props.onPressLeft] - Callback for left press (triggers default back arrow if no leftIcon)
- * @param {number|Object|React.ReactElement} [props.rightIcon] - Right icon/element
- * @param {Function} [props.onPressRight] - Callback for right press
- * @returns {React.ReactElement} The rendered animated Header component
+ * A highly customizable and animated header component.
+ * Allows developers to toggle Avatar, Greeting, Title, Logo, Search, and Top Row.
  */
 
 import React, { useEffect, useRef } from 'react';
@@ -37,12 +22,22 @@ import InputField from '../../input-field/InputField.utility';
 const { width, height } = Dimensions.get('window');
 
 const Header = ({
+  // Data Props
   userName = '',
   userAvatar,
+  title = '',
+  logo, // Can be a require() or {uri: ''}
   searchQuery,
   setSearchQuery,
-  showSearch = true, // Default to true
-  showTopRow = true, // Default to true for Date/Emoji
+  placeholder,
+
+  // Visibility Toggles
+  showAvatar = true,
+  showGreeting = true,
+  showTitle = false,
+  showLogo = false,
+  showSearch = true,
+  showTopRow = true,
 }) => {
   const fadeAnim = useRef(new Animated.Value(0)).current;
   const translateY = useRef(new Animated.Value(-30)).current;
@@ -80,7 +75,7 @@ const Header = ({
         },
       ]}
     >
-      {/* Conditional Top Section */}
+      {/* 1. Top Section: Date/Emoji */}
       {showTopRow && (
         <View style={styles.topRow}>
           <View style={styles.dateContainer}>
@@ -90,29 +85,43 @@ const Header = ({
         </View>
       )}
 
-      {/* Greeting + Avatar */}
-      <View style={styles.greetingRow}>
-        <Image
-          source={
-            userAvatar && userAvatar.length > 0
-              ? { uri: userAvatar }
-              : require('../../../../assets/placeHolder/placeholder.png')
-          }
-          style={styles.avatar}
-        />
-
-        <View style={styles.greetingTextContainer}>
-          <Text style={styles.greeting}>
-            Hi, <Text style={styles.name}>{userName}</Text>!
-          </Text>
-        </View>
+      {/* 2. Middle Section: Logo or Title (Centered or Left-aligned based on Greeting) */}
+      <View style={styles.middleRow}>
+        {showLogo && logo && (
+          <Image source={logo} style={styles.logoStyle} resizeMode="contain" />
+        )}
+        {showTitle && title && <Text style={styles.headerTitle}>{title}</Text>}
       </View>
 
-      {/* Conditional Search Bar */}
+      {/* 3. User Info Section: Avatar + Greeting */}
+      {(showAvatar || showGreeting) && (
+        <View style={styles.greetingRow}>
+          {showAvatar && (
+            <Image
+              source={
+                userAvatar && userAvatar.length > 0
+                  ? { uri: userAvatar }
+                  : require('../../../../assets/placeHolder/placeholder.png')
+              }
+              style={styles.avatar}
+            />
+          )}
+
+          {showGreeting && (
+            <View style={styles.greetingTextContainer}>
+              <Text style={styles.greeting}>
+                Hi, <Text style={styles.name}>{userName}</Text>!
+              </Text>
+            </View>
+          )}
+        </View>
+      )}
+
+      {/* 4. Bottom Section: Search Bar */}
       {showSearch && (
         <View style={styles.searchWrapper}>
           <InputField
-            placeholder="Search anything..."
+            placeholder={placeholder}
             value={searchQuery}
             onChangeText={setSearchQuery}
             containerStyle={styles.inputCustomStyle}
@@ -151,7 +160,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    marginBottom: height * 0.02,
+    marginBottom: height * 0.01,
   },
 
   dateContainer: {
@@ -160,21 +169,35 @@ const styles = StyleSheet.create({
     gap: theme.gap(1),
   },
 
-  emoji: {
-    fontSize: theme.typography.fontSize.sm,
-  },
-
   dateText: {
     fontSize: theme.typography.fontSize.sm,
     fontFamily: theme.typography.medium,
     color: theme.colors.white,
   },
 
+  middleRow: {
+    flexDirection: 'row',
+    marginBottom: height * 0.01,
+  },
+
+  logoStyle: {
+    width: width * 0.18,
+    height: width * 0.18,
+    resizeMode: 'contain',
+  },
+
+  headerTitle: {
+    fontSize: theme.typography.fontSize.xxl,
+    fontFamily: theme.typography.semiBold,
+    color: theme.colors.white,
+    top: height * 0.02,
+    left: width * 0.02,
+  },
+
   greetingRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    marginBottom: height * 0.01,
-    marginTop: height * 0.01,
+    marginVertical: height * 0.01,
   },
 
   avatar: {
@@ -193,15 +216,18 @@ const styles = StyleSheet.create({
     fontSize: theme.typography.fontSize.lg,
     fontFamily: theme.typography.semiBold,
     color: theme.colors.white,
-    lineHeight: 32,
   },
 
   name: {
     color: '#F5BE40',
   },
 
+  searchWrapper: {
+    marginTop: height * 0.01,
+  },
+
   inputCustomStyle: {
     backgroundColor: theme.colors.white,
-    height: height * 0.06,
+    height: height * 0.055,
   },
 });

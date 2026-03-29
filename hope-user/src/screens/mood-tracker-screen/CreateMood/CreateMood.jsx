@@ -27,7 +27,7 @@ import MaterialCommunityIcons from 'react-native-vector-icons/MaterialCommunityI
 import Toast from 'react-native-toast-message';
 import Slider from '@react-native-community/slider';
 import { theme } from '../../../styles/Themes';
-import SubHeader from '../../../utilities/custom-components/header/header/SubHeader';
+
 import InputField from '../../../utilities/custom-components/input-field/InputField.utility';
 
 const { width, height } = Dimensions.get('window');

@@ -5,6 +5,7 @@ import { combineReducers } from 'redux';
 import authReducer from '../slices/auth.slice';
 import userReducer from '../slices/user.slice';
 import moodReducer from '../slices/mood.slice';
+import articleReducer from '../slices/articles.slice';
 
 const persistConfig = {
   key: 'root',
@@ -16,6 +17,7 @@ const rootReducer = combineReducers({
   auth: authReducer,
   user: userReducer,
   mood: moodReducer,
+  article: articleReducer,
 });
 
 const persistedReducer = persistReducer(persistConfig, rootReducer);

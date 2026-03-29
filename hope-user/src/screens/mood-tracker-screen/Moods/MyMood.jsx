@@ -26,9 +26,10 @@ import MaterialCommunityIcons from 'react-native-vector-icons/MaterialCommunityI
 import { useNavigation } from '@react-navigation/native';
 import Modal from '../../../utilities/custom-components/modal/Modal.utility';
 import Toast from 'react-native-toast-message';
-import SubHeader from '../../../utilities/custom-components/header/header/SubHeader';
+
 import * as Animatable from 'react-native-animatable';
-import MoodAnalytics from '../mood-analytics/MoodAnalytics'
+import MoodAnalytics from '../mood-analytics/MoodAnalytics';
+import Header from '../../../utilities/custom-components/header/header/Header';
 
 const { width, height } = Dimensions.get('window');
 
@@ -156,9 +157,15 @@ const MyMood = () => {
       style={styles.container}
     >
       <View style={styles.headerContainer}>
-        <SubHeader
+        <Header
+          showTopRow={false}
+          showLogo={true}
+          showAvatar={false}
+          showGreeting={false}
+          showTitle={true}
+          title={'My Mood'}
           logo={require('../../../assets/logo/logo.png')}
-          title="My Mood"
+          showSearch={false}
         />
       </View>
 
@@ -263,7 +270,7 @@ const MyMood = () => {
             />
           </>
         ) : (
-           <MoodAnalytics />
+          <MoodAnalytics />
         )}
       </View>
 

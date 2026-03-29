@@ -41,9 +41,10 @@ import {
   updateUser,
   requestEmailVerification,
 } from '../../../redux/slices/user.slice';
-import SubHeader from '../../../utilities/custom-components/header/header/SubHeader';
+
 import Button from '../../../utilities/custom-components/button/Button.utility';
 import { useNavigation } from '@react-navigation/native';
+import Header from '../../../utilities/custom-components/header/header/Header';
 
 const { width, height } = Dimensions.get('window');
 
@@ -301,9 +302,15 @@ const MyProfile = () => {
   return (
     <View style={styles.container}>
       <View style={styles.headerContainer}>
-        <SubHeader
-          title="My Profile"
+        <Header
+          showTopRow={false}
+          showLogo={true}
+          showAvatar={false}
+          showGreeting={false}
+          showTitle={true}
+          title={'My Profile'}
           logo={require('../../../assets/logo/logo.png')}
+          showSearch={false}
         />
       </View>
 

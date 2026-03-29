@@ -26,7 +26,8 @@ import {
 import { theme } from '../../../styles/Themes';
 import * as Animatable from 'react-native-animatable';
 import MaterialCommunityIcons from 'react-native-vector-icons/MaterialCommunityIcons';
-import SubHeader from '../../../utilities/custom-components/header/header/SubHeader';
+
+import Header from '../../../utilities/custom-components/header/header/Header';
 
 const { width, height } = Dimensions.get('window');
 
@@ -64,9 +65,15 @@ const AboutUs = () => {
     <View style={styles.container}>
       <StatusBar barStyle="light-content" />
       <View style={styles.headerContainer}>
-        <SubHeader
-          title="About Us"
+        <Header
+          showTopRow={false}
+          showLogo={true}
+          showAvatar={false}
+          showGreeting={false}
+          showTitle={true}
+          title={'About Us'}
           logo={require('../../../assets/logo/logo.png')}
+          showSearch={false}
         />
       </View>
 
