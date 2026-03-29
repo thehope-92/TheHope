@@ -160,7 +160,7 @@ exports.updateArticle = async (req, res) => {
       }
     }
 
-    // Fetch existing article to handle old thumbnail deletion
+    // Fetch existing article
     const existingArticle = await InformationLibrary.findById(articleId);
     if (!existingArticle) {
       return res
@@ -170,26 +170,21 @@ exports.updateArticle = async (req, res) => {
 
     // ====================== THUMBNAIL UPDATE ======================
     if (req.files?.thumbnail && req.files.thumbnail.length > 0) {
-      // Upload all new thumbnail images to Cloudinary
-      const uploadPromises = req.files.thumbnail.map((file) =>
-        uploadToCloudinary(
-          file,
-          "informationLibraryThumbnails/thumbnails", // ← matches your existing folder
-        ),
+      const uploadPromises = req.files.thumbnail.map(
+        (file) => uploadToCloudinary(file, "thumbnail"), // ← Use "thumbnail" here
       );
 
       const uploadResults = await Promise.all(uploadPromises);
       const newThumbnailUrls = uploadResults.map((result) => result.url);
 
-      // Delete old thumbnails from Cloudinary (optional but recommended)
-      if (existingArticle.thumbnail && existingArticle.thumbnail.length > 0) {
+      // Delete old thumbnails
+      if (existingArticle.thumbnail?.length > 0) {
         const deletePromises = existingArticle.thumbnail.map((url) =>
           deleteFromCloudinary(url).catch(console.error),
         );
         await Promise.all(deletePromises);
       }
 
-      // Replace thumbnail array with new URLs
       updates.thumbnail = newThumbnailUrls;
     }
 
@@ -213,7 +208,11 @@ exports.updateArticle = async (req, res) => {
     });
   } catch (error) {
     console.error("Update Article Error:", error);
-    res.status(500).json({ success: false, message: "Update failed" });
+    res.status(500).json({
+      success: false,
+      message: "Update failed",
+      error: error.message,
+    });
   }
 };
 
