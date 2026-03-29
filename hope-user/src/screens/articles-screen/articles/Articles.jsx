@@ -2,10 +2,17 @@
  * @file Articles.jsx
  * @module Screens/Articles
  * @description
- * Ultra ultra enhanced Articles screen with fully theme-driven styling, responsive layout powered by Dimensions, premium category carousel, elegant article cards, and a beautiful animated realistic empty state for superior mental health content discovery UX.
+ * Ultra ultra enhanced Articles screen with fully theme-driven styling, responsive layout,
+ * premium category carousel, and pull-to-refresh functionality for real-time content updates.
  */
 
-import React, { useEffect, useRef, useState, useMemo } from 'react';
+import React, {
+  useEffect,
+  useRef,
+  useState,
+  useMemo,
+  useCallback,
+} from 'react';
 import {
   StyleSheet,
   View,
@@ -18,6 +25,7 @@ import {
   ActivityIndicator,
   ScrollView,
   Animated,
+  RefreshControl,
 } from 'react-native';
 import LinearGradient from 'react-native-linear-gradient';
 import MaterialCommunityIcons from 'react-native-vector-icons/MaterialCommunityIcons';
@@ -30,13 +38,7 @@ import { getAllArticles } from '../../../redux/slices/articles.slice';
 const { width, height } = Dimensions.get('window');
 
 const TOP_CATEGORIES = [
-  {
-    id: '1',
-    name: 'Stress',
-    key: 'STRESS',
-    color: '#8D6E63',
-    icon: 'brain',
-  },
+  { id: '1', name: 'Stress', key: 'STRESS', color: '#8D6E63', icon: 'brain' },
   {
     id: '2',
     name: 'Anxiety',
@@ -112,6 +114,7 @@ const AnimatedEmptyState = () => {
         <Text style={styles.emptyTitle}>No Articles Found</Text>
         <Text style={styles.emptySubtitle}>
           We couldn't find any articles matching your search. Try exploring
+          different categories.
         </Text>
       </Animated.View>
     </View>
@@ -121,25 +124,45 @@ const AnimatedEmptyState = () => {
 const Articles = () => {
   const dispatch = useDispatch();
   const navigation = useNavigation();
-
   const [searchQuery, setSearchQuery] = useState('');
+  const [refreshing, setRefreshing] = useState(false);
 
   const { allArticles, loading } = useSelector(state => state.article);
+
+  const fetchArticles = useCallback(() => {
+    dispatch(getAllArticles());
+  }, [dispatch]);
 
   useEffect(() => {
     StatusBar.setBarStyle('light-content');
     StatusBar.setBackgroundColor(theme.colors.primary);
-    dispatch(getAllArticles());
+    fetchArticles();
+  }, [fetchArticles]);
+
+  const onRefresh = useCallback(async () => {
+    setRefreshing(true);
+    await dispatch(getAllArticles());
+    setRefreshing(false);
   }, [dispatch]);
+
+  const isSearching = searchQuery.trim().length > 0;
+
+  const filteredArticles = useMemo(() => {
+    if (!searchQuery.trim()) return allArticles;
+    const query = searchQuery.toLowerCase().trim();
+    return allArticles.filter(
+      article =>
+        article.title?.toLowerCase().includes(query) ||
+        article.category?.toLowerCase().includes(query),
+    );
+  }, [allArticles, searchQuery]);
 
   const renderCategories = () => (
     <View style={styles.categoriesWrapper}>
       <View style={styles.sectionHeader}>
         <Text style={styles.sectionTitle}>Suggested Category</Text>
         <TouchableOpacity
-          onPress={() => {
-            navigation.navigate('All_Categories');
-          }}
+          onPress={() => navigation.navigate('All_Categories')}
           activeOpacity={0.7}
         >
           <Text style={styles.seeAllText}>See All</Text>
@@ -183,7 +206,10 @@ const Articles = () => {
         style={styles.articleCard}
         activeOpacity={0.9}
         onPress={() =>
-          navigation.navigate('Article_Detail', { articleId: item._id })
+          navigation.navigate('Article_Detail', {
+            slug: item.slug,
+            articleId: item._id,
+          })
         }
       >
         <View style={styles.imageContainer}>
@@ -192,7 +218,6 @@ const Articles = () => {
             style={styles.articleImage}
             resizeMode="cover"
           />
-
           <View style={styles.badgeContainer}>
             <Text style={styles.badgeText}>
               {formatCategoryBadge(item.category)}
@@ -212,13 +237,24 @@ const Articles = () => {
             />
           </View>
         </View>
+
+        <View style={styles.articleViewContainer}>
+          <MaterialCommunityIcons
+            name="eye"
+            size={20}
+            color={theme.colors.tertiary}
+            style={{ marginLeft: theme.spacing(3) }}
+          />
+          <Text style={styles.articleViews} numberOfLines={1}>
+            {item.viewCount || 0} views
+          </Text>
+        </View>
       </TouchableOpacity>
     );
   };
 
   const ListHeader = () => {
-    if (isSearching) return null; // Hide categories + "All Articles" when searching
-
+    if (isSearching) return null;
     return (
       <View>
         {renderCategories()}
@@ -236,21 +272,6 @@ const Articles = () => {
       </View>
     );
   };
-
-  const filteredArticles = useMemo(() => {
-    if (!searchQuery.trim()) return allArticles;
-
-    const query = searchQuery.toLowerCase().trim();
-
-    return allArticles.filter(
-      article =>
-        article.title?.toLowerCase().includes(query) ||
-        article.category?.toLowerCase().includes(query),
-    );
-  }, [allArticles, searchQuery]);
-
-  // Check if user is actively searching
-  const isSearching = searchQuery.trim().length > 0;
 
   return (
     <LinearGradient
@@ -277,7 +298,7 @@ const Articles = () => {
       </View>
 
       <View style={styles.content}>
-        {loading && filteredArticles?.length === 0 ? (
+        {loading && !refreshing && filteredArticles?.length === 0 ? (
           <View style={styles.centerLoader}>
             <ActivityIndicator size="large" color={theme.colors.primary} />
           </View>
@@ -290,6 +311,14 @@ const Articles = () => {
             showsVerticalScrollIndicator={false}
             contentContainerStyle={styles.flatListContent}
             ListEmptyComponent={AnimatedEmptyState}
+            refreshControl={
+              <RefreshControl
+                refreshing={refreshing}
+                onRefresh={onRefresh}
+                colors={[theme.colors.primary]}
+                tintColor={theme.colors.primary}
+              />
+            }
           />
         )}
       </View>
@@ -429,6 +458,20 @@ const styles = StyleSheet.create({
     color: theme.colors.dark,
     marginRight: theme.spacing(2),
     lineHeight: theme.typography.lineHeight.md,
+  },
+
+  articleViewContainer: {
+    flexDirection: 'row',
+    justifyContent: 'flex-start',
+    alignItems: 'center',
+    bottom: theme.spacing(2),
+  },
+
+  articleViews: {
+    fontSize: theme.typography.fontSize.sm,
+    fontFamily: theme.typography.semiBold,
+    color: theme.colors.dark,
+    left: theme.spacing(4),
   },
 
   arrowButton: {

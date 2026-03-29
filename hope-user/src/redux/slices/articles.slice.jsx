@@ -104,6 +104,46 @@ export const getArticleById = createAsyncThunk(
   },
 );
 
+/**
+ * @function getArticleBySlug
+ * @description Fetches single article by slug + automatically increments viewCount
+ */
+export const getArticleBySlug = createAsyncThunk(
+  'articles/getArticleBySlug',
+  async (slug, { rejectWithValue }) => {
+    try {
+      const token = await getToken(rejectWithValue);
+
+      const response = await axios.get(
+        `${BACKEND_API_URL}/library/read/${slug}`,
+        {
+          headers: { Authorization: `Bearer ${token}` },
+        },
+      );
+
+      const { article, message, success } = response.data;
+
+      if (!success) {
+        throw new Error(message || 'Failed to fetch article');
+      }
+
+      return {
+        article: article || response.data,
+        message,
+        success: true,
+      };
+    } catch (error) {
+      const backendError = error.response?.data;
+      return rejectWithValue({
+        message:
+          backendError?.message || error.message || 'Network error occurred',
+        success: false,
+        status: error.response?.status || 0,
+      });
+    }
+  },
+);
+
 const initialState = {
   allArticles: [],
   selectedArticle: null,
@@ -154,6 +194,22 @@ const articlesSlice = createSlice({
         state.success = action.payload.success;
       })
       .addCase(getArticleById.rejected, (state, action) => {
+        state.loading = false;
+        state.error = action.payload;
+        state.message = action.payload?.message;
+      })
+
+      // --- GET ARTICLE BY SLUG (increments viewCount) ---
+      .addCase(getArticleBySlug.pending, state => {
+        state.loading = true;
+        state.error = null;
+      })
+      .addCase(getArticleBySlug.fulfilled, (state, action) => {
+        state.loading = false;
+        state.selectedArticle = action.payload.article;
+        state.success = action.payload.success;
+      })
+      .addCase(getArticleBySlug.rejected, (state, action) => {
         state.loading = false;
         state.error = action.payload;
         state.message = action.payload?.message;

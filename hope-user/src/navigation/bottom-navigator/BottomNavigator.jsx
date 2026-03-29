@@ -17,6 +17,7 @@ import Home from '../../screens/dashboard/Main';
 import Profile from '../../screens/profile-screen/Profile';
 import MyMood from '../../screens/mood-tracker-screen/Moods/MyMood';
 import Articles from '../../screens/articles-screen/articles/Articles';
+import Yoga from '../../screens/yoga-guide-screen/yoga-guide/YogaGuide';
 
 const Tab = createBottomTabNavigator();
 const { width, height } = Dimensions.get('window');
@@ -121,6 +122,24 @@ const BottomNavigator = () => {
       />
 
       <Tab.Screen
+        name="YogaGuide"
+        component={Yoga}
+        options={{
+          tabBarLabel: 'Yoga Guide',
+          tabBarIcon: ({ focused }) => (
+            <AnimatedTabIcon
+              focused={focused}
+              source={
+                focused
+                  ? require('../../assets/navigatorIcons/yoga-filled.png')
+                  : require('../../assets/navigatorIcons/yoga.png')
+              }
+            />
+          ),
+        }}
+      />
+
+      <Tab.Screen
         name="Profile"
         component={Profile}
         options={{
@@ -145,7 +164,7 @@ export default BottomNavigator;
 
 const styles = StyleSheet.create({
   tabBar: {
-    height: height * 0.074,
+    height: height * 0.094,
     elevation: 8,
     shadowColor: '#000',
     shadowOffset: { width: 0, height: -3 },
