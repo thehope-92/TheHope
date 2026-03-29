@@ -2,23 +2,7 @@
  * @file moodSlice.js
  * @module Redux/Slices/Mood
  * @description
- * Redux Toolkit slice for managing user mood tracking operations.
- *
- * Handles:
- * - Creating a new mood entry
- * - Fetching all moods for a specific user
- * - Updating an existing mood entry
- * - Deleting a mood entry
- *
- * Features:
- * - Token-based authentication via AsyncStorage
- * - Proper loading/error state management
- * - Local state updates for CRUD operations (no need to refetch after edit/delete)
- *
- * Exports:
- * - Thunks: createMood, getUserMoods, updateMood, deleteMood
- * - Action: clearMoods (manual state reset)
- * - Reducer: default export for store configuration
+ * Redux Toolkit slice for managing user mood tracking operations. 
  */
 
 import { createSlice, createAsyncThunk } from '@reduxjs/toolkit';

@@ -7,6 +7,7 @@ import userReducer from '../slices/user.slice';
 import moodReducer from '../slices/mood.slice';
 import articleReducer from '../slices/articles.slice';
 import yogaReducer from '../slices/yoga.slice';
+import habitReducer from '../slices/habit.slice';
 
 const persistConfig = {
   key: 'root',
@@ -20,6 +21,7 @@ const rootReducer = combineReducers({
   mood: moodReducer,
   article: articleReducer,
   yoga: yogaReducer,
+  habit: habitReducer,
 });
 
 const persistedReducer = persistReducer(persistConfig, rootReducer);

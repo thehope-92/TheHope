@@ -22,16 +22,13 @@ import InputField from '../../input-field/InputField.utility';
 const { width, height } = Dimensions.get('window');
 
 const Header = ({
-  // Data Props
   userName = '',
   userAvatar,
   title = '',
-  logo, // Can be a require() or {uri: ''}
+  logo,
   searchQuery,
   setSearchQuery,
   placeholder,
-
-  // Visibility Toggles
   showAvatar = true,
   showGreeting = true,
   showTitle = false,
@@ -40,13 +37,13 @@ const Header = ({
   showTopRow = true,
 }) => {
   const fadeAnim = useRef(new Animated.Value(0)).current;
-  const translateY = useRef(new Animated.Value(-30)).current;
+  const translateY = useRef(new Animated.Value(-20)).current;
 
   useEffect(() => {
     Animated.parallel([
       Animated.timing(fadeAnim, {
         toValue: 1,
-        duration: 800,
+        duration: 600,
         useNativeDriver: true,
       }),
       Animated.spring(translateY, {
@@ -75,7 +72,6 @@ const Header = ({
         },
       ]}
     >
-      {/* 1. Top Section: Date/Emoji */}
       {showTopRow && (
         <View style={styles.topRow}>
           <View style={styles.dateContainer}>
@@ -85,15 +81,23 @@ const Header = ({
         </View>
       )}
 
-      {/* 2. Middle Section: Logo or Title (Centered or Left-aligned based on Greeting) */}
-      <View style={styles.middleRow}>
-        {showLogo && logo && (
-          <Image source={logo} style={styles.logoStyle} resizeMode="contain" />
-        )}
-        {showTitle && title && <Text style={styles.headerTitle}>{title}</Text>}
-      </View>
+      {(showLogo || showTitle) && (
+        <View style={styles.middleRow}>
+          {showLogo && logo && (
+            <Image
+              source={logo}
+              style={styles.logoStyle}
+              resizeMode="contain"
+            />
+          )}
+          {showTitle && title && (
+            <Text style={styles.headerTitle} numberOfLines={1}>
+              {title}
+            </Text>
+          )}
+        </View>
+      )}
 
-      {/* 3. User Info Section: Avatar + Greeting */}
       {(showAvatar || showGreeting) && (
         <View style={styles.greetingRow}>
           {showAvatar && (
@@ -117,7 +121,6 @@ const Header = ({
         </View>
       )}
 
-      {/* 4. Bottom Section: Search Bar */}
       {showSearch && (
         <View style={styles.searchWrapper}>
           <InputField
@@ -128,7 +131,7 @@ const Header = ({
             leftIcon={
               <MaterialCommunityIcons
                 name="magnify"
-                size={22}
+                size={20}
                 color={theme.colors.primary}
               />
             }
@@ -144,16 +147,16 @@ export default Header;
 const styles = StyleSheet.create({
   headerContainer: {
     backgroundColor: theme.colors.primary,
-    paddingTop: height * 0.06,
+    paddingTop: height * 0.05,
     paddingHorizontal: width * 0.06,
-    paddingBottom: height * 0.02,
-    borderBottomLeftRadius: theme.borderRadius.circle,
-    borderBottomRightRadius: theme.borderRadius.circle,
+    paddingBottom: height * 0.025,
+    borderBottomLeftRadius: width * 0.08,
+    borderBottomRightRadius: width * 0.08,
+    elevation: 10,
     shadowColor: '#000',
-    shadowOffset: { width: 0, height: 12 },
-    shadowOpacity: 0.25,
-    shadowRadius: 20,
-    elevation: 15,
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.15,
+    shadowRadius: 10,
   },
 
   topRow: {
@@ -166,50 +169,56 @@ const styles = StyleSheet.create({
   dateContainer: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: theme.gap(1),
+  },
+
+  emoji: {
+    fontSize: theme.typography.fontSize.md,
+    marginRight: width * 0.015,
   },
 
   dateText: {
-    fontSize: theme.typography.fontSize.sm,
+    fontSize: theme.typography.fontSize.xs,
     fontFamily: theme.typography.medium,
     color: theme.colors.white,
+    opacity: 0.9,
   },
 
   middleRow: {
     flexDirection: 'row',
-    marginBottom: height * 0.01,
+    alignItems: 'center',
+    marginBottom: height * 0.012,
   },
 
   logoStyle: {
-    width: width * 0.18,
-    height: width * 0.18,
+    width: width * 0.12,
+    height: width * 0.12,
     resizeMode: 'contain',
   },
 
   headerTitle: {
-    fontSize: theme.typography.fontSize.xxl,
+    fontSize: theme.typography.fontSize.sm,
     fontFamily: theme.typography.semiBold,
     color: theme.colors.white,
-    top: height * 0.02,
-    left: width * 0.02,
+    marginLeft: width * 0.02,
+    flexShrink: 1,
   },
 
   greetingRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    marginVertical: height * 0.01,
+    marginBottom: height * 0.015,
   },
 
   avatar: {
-    width: width * 0.14,
-    height: width * 0.14,
-    borderRadius: width * 0.07,
-    borderWidth: 3,
-    borderColor: '#E8D5B8',
+    width: width * 0.11,
+    height: width * 0.11,
+    borderRadius: (width * 0.11) / 2,
+    borderWidth: 2,
+    borderColor: 'rgba(232, 213, 184, 0.8)',
   },
 
   greetingTextContainer: {
-    marginLeft: width * 0.04,
+    marginLeft: width * 0.03,
   },
 
   greeting: {
@@ -219,15 +228,16 @@ const styles = StyleSheet.create({
   },
 
   name: {
-    color: '#F5BE40',
+    color: theme.colors.secondary || '#F5BE40',
   },
 
   searchWrapper: {
-    marginTop: height * 0.01,
+    marginTop: height * 0.005,
   },
 
   inputCustomStyle: {
     backgroundColor: theme.colors.white,
     height: height * 0.055,
+    borderRadius: theme.borderRadius.md || 12,
   },
 });

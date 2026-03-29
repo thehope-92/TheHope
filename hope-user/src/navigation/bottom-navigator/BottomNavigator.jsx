@@ -10,7 +10,7 @@
  */
 
 import React, { useEffect, useRef } from 'react';
-import { Image, StyleSheet, Dimensions, Animated } from 'react-native';
+import { Image, StyleSheet, Dimensions, Animated, View } from 'react-native';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import { theme } from '../../styles/Themes';
 import Home from '../../screens/dashboard/Main';
@@ -18,32 +18,56 @@ import Profile from '../../screens/profile-screen/Profile';
 import MyMood from '../../screens/mood-tracker-screen/Moods/MyMood';
 import Articles from '../../screens/articles-screen/articles/Articles';
 import Yoga from '../../screens/yoga-guide-screen/yoga-guide/YogaGuide';
+import Habit from '../../screens/habit-screen/habits/Habit';
 
 const Tab = createBottomTabNavigator();
 const { width, height } = Dimensions.get('window');
+
+const iconMap = {
+  Home: {
+    active: require('../../assets/navigatorIcons/home-filled.png'),
+    inactive: require('../../assets/navigatorIcons/home.png'),
+  },
+  Articles: {
+    active: require('../../assets/navigatorIcons/article-filled.png'),
+    inactive: require('../../assets/navigatorIcons/article.png'),
+  },
+  Habits: {
+    active: require('../../assets/navigatorIcons/habit-filled.png'),
+    inactive: require('../../assets/navigatorIcons/habit.png'),
+  },
+  MoodTracker: {
+    active: require('../../assets/navigatorIcons/mood-filled.png'),
+    inactive: require('../../assets/navigatorIcons/mood.png'),
+  },
+  YogaGuide: {
+    active: require('../../assets/navigatorIcons/yoga-filled.png'),
+    inactive: require('../../assets/navigatorIcons/yoga.png'),
+  },
+  Profile: {
+    active: require('../../assets/navigatorIcons/profile-filled.png'),
+    inactive: require('../../assets/navigatorIcons/profile.png'),
+  },
+};
 
 const AnimatedTabIcon = ({ focused, source }) => {
   const scaleValue = useRef(new Animated.Value(1)).current;
 
   useEffect(() => {
     Animated.spring(scaleValue, {
-      toValue: focused ? 1.2 : 1,
+      toValue: focused ? 1.15 : 1,
       friction: 4,
       useNativeDriver: true,
     }).start();
-  }, [focused, scaleValue]);
+  }, [focused]);
 
   return (
-    <Animated.View
-      style={[styles.imageContainer, { transform: [{ scale: scaleValue }] }]}
-    >
+    <Animated.View style={{ transform: [{ scale: scaleValue }] }}>
       <Image
         source={source}
         style={[
           styles.image,
-          {
-            tintColor: focused ? theme.colors.primary : theme.colors.gray,
-          },
+          { tintColor: focused ? theme.colors.primary : theme.colors.gray },
         ]}
       />
     </Animated.View>
@@ -51,6 +75,15 @@ const AnimatedTabIcon = ({ focused, source }) => {
 };
 
 const BottomNavigator = () => {
+  const screens = [
+    { name: 'Main', component: Home, label: 'Home', iconKey: 'Home' },
+    { name: 'Habits', component: Habit, label: 'Habits', iconKey: 'Habits' },
+    { name: 'Articles', component: Articles, label: 'Articles', iconKey: 'Articles' },
+    { name: 'MoodTracker', component: MyMood, label: 'Mood', iconKey: 'MoodTracker' },
+    { name: 'YogaGuide', component: Yoga, label: 'Yoga', iconKey: 'YogaGuide' },
+    { name: 'Profile', component: Profile, label: 'Profile', iconKey: 'Profile' },
+  ];
+
   return (
     <Tab.Navigator
       initialRouteName="Main"
@@ -58,104 +91,28 @@ const BottomNavigator = () => {
         headerShown: false,
         tabBarActiveTintColor: theme.colors.primary,
         tabBarInactiveTintColor: theme.colors.gray,
-        tabBarStyle: [
-          styles.tabBar,
-          {
-            backgroundColor: theme.colors.white,
-          },
-        ],
+        tabBarHideOnKeyboard: true,
+        tabBarStyle: styles.tabBar,
         tabBarLabelStyle: styles.tabBarLabel,
       }}
     >
-      <Tab.Screen
-        name="Main"
-        component={Home}
-        options={{
-          tabBarLabel: 'Home',
-          tabBarIcon: ({ focused }) => (
-            <AnimatedTabIcon
-              focused={focused}
-              source={
-                focused
-                  ? require('../../assets/navigatorIcons/home-filled.png')
-                  : require('../../assets/navigatorIcons/home.png')
-              }
-            />
-          ),
-        }}
-      />
-
-      <Tab.Screen
-        name="Articles"
-        component={Articles}
-        options={{
-          tabBarLabel: 'Articles',
-          tabBarIcon: ({ focused }) => (
-            <AnimatedTabIcon
-              focused={focused}
-              source={
-                focused
-                  ? require('../../assets/navigatorIcons/article-filled.png')
-                  : require('../../assets/navigatorIcons/article.png')
-              }
-            />
-          ),
-        }}
-      />
-
-      <Tab.Screen
-        name="MoodTracker"
-        component={MyMood}
-        options={{
-          tabBarLabel: 'Mood Tracker',
-          tabBarIcon: ({ focused }) => (
-            <AnimatedTabIcon
-              focused={focused}
-              source={
-                focused
-                  ? require('../../assets/navigatorIcons/mood-filled.png')
-                  : require('../../assets/navigatorIcons/mood.png')
-              }
-            />
-          ),
-        }}
-      />
-
-      <Tab.Screen
-        name="YogaGuide"
-        component={Yoga}
-        options={{
-          tabBarLabel: 'Yoga Guide',
-          tabBarIcon: ({ focused }) => (
-            <AnimatedTabIcon
-              focused={focused}
-              source={
-                focused
-                  ? require('../../assets/navigatorIcons/yoga-filled.png')
-                  : require('../../assets/navigatorIcons/yoga.png')
-              }
-            />
-          ),
-        }}
-      />
-
-      <Tab.Screen
-        name="Profile"
-        component={Profile}
-        options={{
-          tabBarLabel: 'Profile',
-          tabBarIcon: ({ focused }) => (
-            <AnimatedTabIcon
-              focused={focused}
-              source={
-                focused
-                  ? require('../../assets/navigatorIcons/profile-filled.png')
-                  : require('../../assets/navigatorIcons/profile.png')
-              }
-            />
-          ),
-        }}
-      />
+      {screens.map((item) => (
+        <Tab.Screen
+          key={item.name}
+          name={item.name}
+          component={item.component}
+          options={{
+            tabBarLabel: item.label,
+            tabBarShowLabel: true,
+            tabBarIcon: ({ focused }) => (
+              <AnimatedTabIcon
+                focused={focused}
+                source={focused ? iconMap[item.iconKey].active : iconMap[item.iconKey].inactive}
+              />
+            ),
+          }}
+        />
+      ))}
     </Tab.Navigator>
   );
 };
@@ -164,30 +121,27 @@ export default BottomNavigator;
 
 const styles = StyleSheet.create({
   tabBar: {
-    height: height * 0.094,
-    elevation: 8,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: -3 },
-    shadowOpacity: 0.1,
-    shadowRadius: 3,
+    height: height * 0.085,
+    backgroundColor: theme.colors.white,
     borderTopWidth: 0,
+    elevation: 10,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: -4 },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+    paddingBottom: height * 0.015,
+    paddingTop: height * 0.01,
   },
-
+  
   tabBarLabel: {
-    fontSize: theme.typography.fontSize.xs,
+    fontSize: 10,
     fontFamily: theme.typography.bold,
-    marginTop: height * 0.009,
-  },
-
-  imageContainer: {
-    marginTop: height * 0.01,
-    justifyContent: 'center',
-    alignItems: 'center',
+    marginTop: -2,
   },
 
   image: {
-    width: width * 0.07,
-    height: height * 0.04,
+    width: 24,
+    height: 24,
     resizeMode: 'contain',
   },
 });

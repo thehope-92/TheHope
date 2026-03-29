@@ -112,7 +112,7 @@ const ArticleDetail = () => {
         showAvatar={false}
         showGreeting={false}
         showTitle={true}
-        title="Article Details"
+        title={selectedArticle.title}
         showSearch={false}
         showBackButton={true}
       />
