@@ -189,27 +189,25 @@ const habitSlice = createSlice({
         state.dashboard.habits = action.payload.habits || [];
         state.dashboard.stats = action.payload.stats || {};
         state.dashboard.selectedDate = action.payload.selectedDate;
-      })
+      });
 
-      /* Toggle & Delete (unchanged) */
+    /* Toggle & Delete (unchanged) */
+    builder
       .addCase(toggleHabitStatus.fulfilled, (state, action) => {
-        const { habitId, isCompletedToday } = action.payload;
+        const { habitId, date } = action.payload;
 
-        const dashboardHabit = state.dashboard.habits.find(
-          h => h._id === habitId,
-        );
-        if (dashboardHabit) {
-          dashboardHabit.isCompleted = isCompletedToday;
+        const habit = state.dashboard.habits.find(h => h._id === habitId);
 
-          const completedCount = state.dashboard.habits.filter(
-            h => h.isCompleted,
-          ).length;
-          const total = state.dashboard.habits.length;
-          state.dashboard.stats.completed = completedCount;
-          state.dashboard.stats.percent = total
-            ? Math.round((completedCount / total) * 100)
-            : 0;
-          state.dashboard.stats.label = `${completedCount} of ${total} completed`;
+        if (habit) {
+          const alreadyCompleted = habit.completedDates?.includes(date);
+
+          if (alreadyCompleted) {
+            habit.completedDates = habit.completedDates.filter(d => d !== date);
+            habit.isCompleted = false;
+          } else {
+            habit.completedDates = [...(habit.completedDates || []), date];
+            habit.isCompleted = true;
+          }
         }
       })
 

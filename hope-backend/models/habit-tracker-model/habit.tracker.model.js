@@ -114,6 +114,17 @@ const habitSchema = new mongoose.Schema(
       type: Boolean,
       default: true,
     },
+
+    startDate: {
+      type: String, // Format: "YYYY-MM-DD"
+      required: [true, "Start date is required"],
+      validate: {
+        validator: function (v) {
+          return /^\d{4}-\d{2}-\d{2}$/.test(v);
+        },
+        message: "startDate must be in YYYY-MM-DD format",
+      },
+    },
   },
   {
     timestamps: true,

@@ -8,7 +8,7 @@ const User = require("../../models/user-model/user.model");
 const moment = require("moment"); // Highly recommended for date handling
 
 /**
- * Create a new personal habit
+ * Create a new personal habit (Backdating Allowed)
  * @access Private (User)
  */
 exports.createHabit = async (req, res) => {
@@ -20,31 +20,44 @@ exports.createHabit = async (req, res) => {
       frequency,
       isReminderOn,
       reminderTime,
+      startDate, // The date the user picked (e.g., "2026-03-26")
     } = req.body;
 
     /* 1. VALIDATION */
-    if (!title) {
+    if (!title?.trim()) {
       return res.status(400).json({
         success: false,
         message: "Habit title is required",
       });
     }
 
+    // Ensure a date is provided, otherwise default to today
+    const finalStartDate = startDate || moment().format("YYYY-MM-DD");
+
     /* 2. CREATE HABIT */
+    // No overrides here. If the user sends March 26, we save March 26.
     const habit = new Habit({
       user: req.user.id,
-      title,
-      description,
-      category,
-      frequency,
-      isReminderOn,
-      reminderTime,
+      title: title.trim(),
+      description: description?.trim() || "",
+      category: category || "OTHER",
+      frequency: frequency || [
+        "MONDAY",
+        "TUESDAY",
+        "WEDNESDAY",
+        "THURSDAY",
+        "FRIDAY",
+        "SATURDAY",
+        "SUNDAY",
+      ],
+      isReminderOn: !!isReminderOn,
+      reminderTime: isReminderOn ? reminderTime : undefined,
+      startDate: finalStartDate,
     });
 
     await habit.save();
 
-    /* 3. SYNC WITH USER SCHEMA */
-    // We update the User document to include this new habit ID in their 'habits' array
+    /* 3. Sync with User */
     const updatedUser = await User.findByIdAndUpdate(
       req.user.id,
       { $push: { habits: habit._id } },
@@ -52,7 +65,7 @@ exports.createHabit = async (req, res) => {
     );
 
     if (!updatedUser) {
-      // If for some reason the user isn't found, we should clean up the orphaned habit
+      // Cleanup if user update fails
       await Habit.findByIdAndDelete(habit._id);
       return res.status(404).json({
         success: false,
@@ -66,7 +79,7 @@ exports.createHabit = async (req, res) => {
       habit,
     });
   } catch (error) {
-    console.error("Create Habit Sync Error:", error);
+    console.error("Create Habit Error:", error);
     res.status(500).json({
       success: false,
       message: "Failed to create habit",
@@ -188,23 +201,29 @@ exports.toggleHabitCompletion = async (req, res) => {
  */
 exports.getDailyDashboard = async (req, res) => {
   try {
-    // 1. Get the date from query (e.g., /?date=2026-02-05) or default to today
-    const targetDate = req.query.date || moment().format("YYYY-MM-DD");
-    const dayName = moment(targetDate).format("dddd").toUpperCase(); // e.g., "THURSDAY"
+    let targetDate = req.query.date || moment().format("YYYY-MM-DD");
 
-    // 2. Security Check: Prevent future completion logic (but allow viewing)
+    // Validate date format
+    if (!/^\d{4}-\d{2}-\d{2}$/.test(targetDate)) {
+      targetDate = moment().format("YYYY-MM-DD");
+    }
+
+    const dayName = moment(targetDate).format("dddd").toUpperCase();
     const isFuture = moment(targetDate).isAfter(moment(), "day");
 
-    // 3. Find habits scheduled for this specific day of the week
+    // Find habits that:
+    // - Belong to user
+    // - Are active
+    // - Have this day in frequency
+    // - Have started on or before the target date
     const habits = await Habit.find({
       user: req.user.id,
       isActive: true,
       frequency: dayName,
-      // Only show habits that existed on or before the target date
-      createdAt: { $lte: moment(targetDate).endOf("day").toDate() },
-    }).sort({ createdAt: 1 });
+      startDate: { $lte: targetDate }, // Habit must have started by this date
+    }).sort({ startDate: 1, createdAt: 1 });
 
-    // 4. Map habits to include a "isCompleted" boolean for the checkbox
+    // Format + check completion status for THIS specific date
     const formattedHabits = habits.map((habit) => {
       const habitObj = habit.toObject();
       return {
@@ -213,8 +232,7 @@ exports.getDailyDashboard = async (req, res) => {
       };
     });
 
-    // 5. Calculate Progress Stats
-    const total = habits.length;
+    const total = formattedHabits.length;
     const completedCount = formattedHabits.filter((h) => h.isCompleted).length;
     const progressPercent =
       total > 0 ? Math.round((completedCount / total) * 100) : 0;
@@ -229,14 +247,16 @@ exports.getDailyDashboard = async (req, res) => {
         total,
         completed: completedCount,
         percent: progressPercent,
-        label: `${completedCount} of ${total} completed`, // Matches your UI text
+        label: `${completedCount} of ${total} completed`,
       },
       habits: formattedHabits,
     });
   } catch (error) {
-    res
-      .status(500)
-      .json({ success: false, message: "Error loading dashboard" });
+    console.error("Get Daily Dashboard Error:", error);
+    res.status(500).json({
+      success: false,
+      message: "Error loading dashboard",
+    });
   }
 };
 

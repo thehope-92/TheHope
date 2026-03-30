@@ -6,23 +6,17 @@
  *
  * Serves as the top-level component responsible for:
  * - Mounting the primary navigation structure via {@link RootNavigator}
- * - Initializing the global toast notification system (react-native-toast-message)
- *   with clean, modern, and consistent custom styling aligned to the application's design system
- * - Setting up Stripe payment provider for payment processing
- *
- * Enhanced toast features:
- * - Unified custom toast rendering via BaseToast for success & error (no more duplication)
- * - Stronger accent border, softer shadows, better spacing & responsive icon sizing
- * - Premium modern look: larger rounded corners, deeper elevation, tighter typography
- * - Reduced code clutter while improving visual hierarchy and polish
+ * - Initializing the global toast notification system with custom styling
+ * - Setting up Notifee for push notifications (habit reminders)
  */
 
-import React from 'react';
+import React, { useEffect } from 'react';
 import { Dimensions } from 'react-native';
 import RootNavigator from './src/navigation/RootNavigator';
 import Toast, { BaseToast } from 'react-native-toast-message';
 import { theme } from './src/styles/Themes';
 import MaterialCommunityIcons from 'react-native-vector-icons/MaterialCommunityIcons';
+import notifee, { AndroidImportance } from '@notifee/react-native';
 
 const { width, height } = Dimensions.get('window');
 
@@ -85,6 +79,28 @@ const toastConfig = {
 };
 
 const App = () => {
+  // Initialize Notifee notification channel on app start
+  useEffect(() => {
+    const setupNotifee = async () => {
+      try {
+        await notifee.createChannel({
+          id: 'habit-reminders',
+          name: 'Habit Reminders',
+          description: 'Daily reminders for your habits',
+          importance: AndroidImportance.HIGH,
+          sound: 'default',
+          vibration: true,
+        });
+
+        console.log('Notifee channel "habit-reminders" created successfully');
+      } catch (error) {
+        console.error('Failed to create Notifee channel:', error);
+      }
+    };
+
+    setupNotifee();
+  }, []);
+
   return (
     <>
       <RootNavigator />

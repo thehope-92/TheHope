@@ -48,8 +48,12 @@ import ArticleDetails from '../screens/articles-screen/article-detail-screen/Art
 
 // Yoga Guide Screens
 import AllYogaCategories from '../screens/yoga-guide-screen/all-yoga-categories-screen/AllYogaCategories';
-import YogaCategory from '../screens/yoga-guide-screen/yoga-category-screen/YogaCategory'
+import YogaCategory from '../screens/yoga-guide-screen/yoga-category-screen/YogaCategory';
 import YogaDetail from '../screens/yoga-guide-screen/yoga-detail-screen/YogaDetail';
+
+//Habit Screens
+import CreateHabit from '../screens/habit-screen/create-habit/CreateHabit';
+import UpdateHabit from '../screens/habit-screen/update-habit/UpdateHabit';
 
 const Stack = createNativeStackNavigator();
 
@@ -143,9 +147,12 @@ const AppNavigator = () => {
         </Stack.Screen>
 
         {/* --- YOGA GUIDE SCREENS --- */}
-         <Stack.Screen name="All_Yoga_Categories">
+        <Stack.Screen name="All_Yoga_Categories">
           {props => (
-            <AllYogaCategories {...props} setStatusBarColor={setStatusBarColor} />
+            <AllYogaCategories
+              {...props}
+              setStatusBarColor={setStatusBarColor}
+            />
           )}
         </Stack.Screen>
 
@@ -158,6 +165,19 @@ const AppNavigator = () => {
         <Stack.Screen name="Yoga_Detail">
           {props => (
             <YogaDetail {...props} setStatusBarColor={setStatusBarColor} />
+          )}
+        </Stack.Screen>
+
+        {/* --- HABIT SCREENS --- */}
+        <Stack.Screen name="Add_Habit">
+          {props => (
+            <CreateHabit {...props} setStatusBarColor={setStatusBarColor} />
+          )}
+        </Stack.Screen>
+
+        <Stack.Screen name="Update_Habit">
+          {props => (
+            <UpdateHabit {...props} setStatusBarColor={setStatusBarColor} />
           )}
         </Stack.Screen>
       </Stack.Navigator>
