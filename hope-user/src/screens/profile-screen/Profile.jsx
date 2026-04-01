@@ -3,19 +3,9 @@
  * @module Screens/Profile
  * @description
  * The primary user account management screen for the NiDrip Central application.
- * * Responsibilities:
- * - Displays user identity information (Avatar, Username).
- * - Provides navigation to secondary account screens (My Profile, About Us).
- * - Manages session termination (Logout) with Redux state cleanup and feedback.
- * - Handles destructive actions (Account Deletion) via a secure modal workflow and reason collection.
- * * Features:
- * - Dynamic Profile Sync: Fetches latest user data via Redux on focus.
- * - Secure Logout: Resets navigation stack to 'Signin' upon successful session clearance.
- * - Enhanced Feedback: Integrates `react-native-toast-message` for process status (success/error).
- * - Modal Integration: Uses a custom utility modal for permanent account removal confirmations.
  */
 
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useRef } from 'react';
 import {
   StyleSheet,
   View,
@@ -25,14 +15,19 @@ import {
   ScrollView,
   Linking,
   TouchableOpacity,
+  Animated,
 } from 'react-native';
 import MaterialCommunityIcons from 'react-native-vector-icons/MaterialCommunityIcons';
 import { theme } from '../../styles/Themes';
 import { useDispatch, useSelector } from 'react-redux';
-import { deleteAccount, getUser } from '../../redux/slices/user.slice';
+import {
+  deleteAccount,
+  getUser,
+  toggleStealthMode,
+} from '../../redux/slices/user.slice';
 import Header from '../../utilities/custom-components/header/header/Header';
 import ProfileCard from '../../utilities/custom-components/card/profile-card/ProfileCard';
-import { useNavigation } from '@react-navigation/native';
+import { useNavigation, useFocusEffect } from '@react-navigation/native';
 import Toast from 'react-native-toast-message';
 import { logoutUser } from '../../redux/slices/auth.slice';
 import Modal from '../../utilities/custom-components/modal/Modal.utility';
@@ -44,6 +39,7 @@ const { width, height } = Dimensions.get('window');
 const Profile = () => {
   const dispatch = useDispatch();
   const navigation = useNavigation();
+
   const user = useSelector(state => state.auth.user);
   const profile = useSelector(state => state.user.user);
 
@@ -51,22 +47,110 @@ const Profile = () => {
   const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [showSupportModal, setShowSupportModal] = useState(false);
   const [deleteReason, setDeleteReason] = useState('');
+  const [isStealthMode, setIsStealthMode] = useState(false);
+  const [stealthLoading, setStealthLoading] = useState(false);
 
+  const toggleAnim = useRef(new Animated.Value(0)).current;
+
+  // Sync with Redux
   useEffect(() => {
-    if (user?.id) {
-      dispatch(getUser(user.id));
+    if (profile?.isStealthModeEnabled !== undefined) {
+      setIsStealthMode(profile.isStealthModeEnabled);
     }
-  }, [dispatch, user]);
+  }, [profile]);
+
+  // Fetch latest user data when screen is focused
+  useFocusEffect(
+    React.useCallback(() => {
+      if (user?.id) {
+        dispatch(getUser(user.id));
+      }
+    }, [dispatch, user]),
+  );
 
   useEffect(() => {
     StatusBar.setBarStyle('light-content');
     StatusBar.setBackgroundColor('transparent');
+    StatusBar.setTranslucent(true);
   }, []);
 
+  // Smooth toggle animation
+  useEffect(() => {
+    Animated.timing(toggleAnim, {
+      toValue: isStealthMode ? 1 : 0,
+      duration: 280,
+      useNativeDriver: false,
+    }).start();
+  }, [isStealthMode]);
+
+  const translateX = toggleAnim.interpolate({
+    inputRange: [0, 1],
+    outputRange: [3, width * 0.072],
+  });
+
+  const trackColor = toggleAnim.interpolate({
+    inputRange: [0, 1],
+    outputRange: ['#CBD5E1', '#22C55E'],
+  });
+
+  // const changeAppIcon = async toStealth => {
+  //   try {
+  //     if (toStealth) {
+  //       await AppIcon.setAppIcon('MainActivityStealthIcon');
+  //     } else {
+  //       await resetAlternateIconName();
+  //     }
+  //     console.log(
+  //       `✅ App icon changed to ${toStealth ? 'STEALTH' : 'DEFAULT'}`,
+  //     );
+  //   } catch (err) {
+  //     console.warn('Icon change failed (normal on simulators):', err.message);
+  //   }
+  // };
+
+  // const handleToggleStealthMode = async () => {
+  //   setStealthLoading(true);
+
+  //   try {
+  //     const resultAction = await dispatch(toggleStealthMode());
+
+  //     if (toggleStealthMode.fulfilled.match(resultAction)) {
+  //       const newState = resultAction.payload.isStealthModeEnabled;
+  //       setIsStealthMode(newState);
+
+  //       await changeAppIcon(newState);
+
+  //       Toast.show({
+  //         type: 'success',
+  //         text1: newState
+  //           ? 'Stealth Mode Activated'
+  //           : 'Stealth Mode Deactivated',
+  //         text2: newState
+  //           ? 'App icon changed to private mode'
+  //           : 'Original app icon restored',
+  //         visibilityTime: 2400,
+  //       });
+  //     } else {
+  //       Toast.show({
+  //         type: 'error',
+  //         text1: 'Failed',
+  //         text2:
+  //           resultAction.payload?.message || 'Unable to toggle stealth mode',
+  //       });
+  //     }
+  //   } catch (error) {
+  //     Toast.show({
+  //       type: 'error',
+  //       text1: 'Error',
+  //       text2: error?.message || 'Something went wrong',
+  //     });
+  //   } finally {
+  //     setStealthLoading(false);
+  //   }
+  // };
+
   const handleProfileNavigate = () => {
-    navigation.navigate('My_Profile', {
-      user: profile,
-    });
+    navigation.navigate('My_Profile', { user: profile });
   };
 
   const handleLogout = async () => {
@@ -125,7 +209,6 @@ const Profile = () => {
 
       if (deleteAccount.fulfilled.match(resultAction)) {
         setShowDeleteModal(false);
-
         Toast.show({
           type: 'success',
           text1: 'Account Deleted',
@@ -179,7 +262,7 @@ const Profile = () => {
           <ProfileCard
             title="Support Center"
             iconName="headphones"
-            onPressFunction={() => setShowSupportModal(true)} // Changed this line
+            onPressFunction={() => setShowSupportModal(true)}
           />
           <ProfileCard
             title="About Us"
@@ -189,6 +272,40 @@ const Profile = () => {
         </View>
 
         <View style={styles.menuGroup}>
+          {/* Stealth Mode Toggle */}
+          <View style={styles.stealthRow}>
+            <View style={styles.stealthInfo}>
+              <MaterialCommunityIcons
+                name="incognito"
+                size={28}
+                color={isStealthMode ? theme.colors.primary : '#8E8E93'}
+              />
+              <View style={styles.stealthTextContainer}>
+                <Text style={styles.stealthTitle}>Stealth Mode</Text>
+                <Text style={styles.stealthDescription}>
+                  {isStealthMode
+                    ? 'App icon hidden • Activity is private'
+                    : 'Hide app from others'}
+                </Text>
+              </View>
+            </View>
+
+            <TouchableOpacity
+              activeOpacity={0.85}
+              // onPress={handleToggleStealthMode}
+              disabled={stealthLoading}
+              style={styles.toggleWrapper}
+            >
+              <Animated.View
+                style={[styles.toggleTrack, { backgroundColor: trackColor }]}
+              >
+                <Animated.View
+                  style={[styles.toggleKnob, { transform: [{ translateX }] }]}
+                />
+              </Animated.View>
+            </TouchableOpacity>
+          </View>
+
           <ProfileCard
             title="Logout"
             iconName="logout-variant"
@@ -202,6 +319,7 @@ const Profile = () => {
         </View>
       </ScrollView>
 
+      {/* Delete Account Modal */}
       <Modal
         isOpen={showDeleteModal}
         onClose={() => {
@@ -247,7 +365,7 @@ const Profile = () => {
               }}
               backgroundColor="#F4F5F7"
               textColor="#3E322A"
-              width={width * 0.12}
+              width={width * 0.38}
             />
 
             <Button
@@ -256,19 +374,19 @@ const Profile = () => {
               loading={loading}
               backgroundColor="#F44336"
               textColor={theme.colors.white}
-              width={width * 0.12}
+              width={width * 0.38}
             />
           </View>
         </View>
       </Modal>
 
+      {/* Support Center Modal */}
       <Modal
         isOpen={showSupportModal}
         onClose={() => setShowSupportModal(false)}
         showCloseButton={true}
       >
         <View style={styles.enhancedModalContent}>
-          {/* Calm Wellness Icon */}
           <View style={styles.supportIconWrapper}>
             <MaterialCommunityIcons
               name="headset"
@@ -283,7 +401,6 @@ const Profile = () => {
             we’re listening with care and compassion.
           </Text>
 
-          {/* WhatsApp Card */}
           <TouchableOpacity
             style={styles.contactCard}
             activeOpacity={0.85}
@@ -312,7 +429,6 @@ const Profile = () => {
             />
           </TouchableOpacity>
 
-          {/* Email Card */}
           <TouchableOpacity
             style={styles.contactCard}
             activeOpacity={0.85}
@@ -343,7 +459,6 @@ const Profile = () => {
             />
           </TouchableOpacity>
 
-          {/* Privacy & Care Note */}
           <Text style={styles.privacyNote}>
             All conversations are completely private and confidential • Your
             healing journey is safe with us
@@ -378,6 +493,63 @@ const styles = StyleSheet.create({
     paddingHorizontal: width * 0.024,
     marginBottom: height * 0.02,
     marginTop: height * 0.02,
+  },
+
+  stealthRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    paddingVertical: height * 0.022,
+    paddingHorizontal: width * 0.04,
+    borderBottomWidth: 1,
+    borderBottomColor: '#F0F0F0',
+  },
+
+  stealthInfo: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: width * 0.04,
+  },
+
+  stealthTextContainer: {
+    flex: 1,
+  },
+
+  stealthTitle: {
+    fontSize: theme.typography.fontSize.md,
+    fontFamily: theme.typography.semiBold,
+    color: theme.colors.dark,
+  },
+
+  stealthDescription: {
+    fontSize: theme.typography.fontSize.xs,
+    fontFamily: theme.typography.regular,
+    color: '#64748B',
+    marginTop: 2,
+  },  
+
+  toggleWrapper:{
+    marginLeft: -width * 0.1
+  },
+
+  toggleTrack: {
+    width: width * 0.145,
+    height: width * 0.072,
+    borderRadius: width * 0.036,
+    justifyContent: 'center',
+    paddingHorizontal: width * 0.006,
+  },
+
+  toggleKnob: {
+    width: width * 0.06,
+    height: width * 0.06,
+    borderRadius: width * 0.03,
+    backgroundColor: '#FFFFFF',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.25,
+    shadowRadius: 4,
+    elevation: 4,
   },
 
   enhancedModalContent: {
@@ -428,7 +600,7 @@ const styles = StyleSheet.create({
   },
 
   reasonInput: {
-    width: '109%',
+    width: '100%',
     marginBottom: height * 0.03,
     fontSize: theme.typography.fontSize.md,
   },
@@ -437,6 +609,7 @@ const styles = StyleSheet.create({
     width: width * 0.86,
     flexDirection: 'row',
     justifyContent: 'space-around',
+    gap: width * 0.04,
   },
 
   supportIconWrapper: {
@@ -495,7 +668,7 @@ const styles = StyleSheet.create({
     borderRadius: width * 0.06,
     justifyContent: 'center',
     alignItems: 'center',
-    marginRight: width * 0.02,
+    marginRight: width * 0.03,
   },
 
   contactTextContainer: {
@@ -518,6 +691,16 @@ const styles = StyleSheet.create({
   responseTag: {
     fontSize: theme.typography.fontSize.xs,
     fontFamily: theme.typography.semiBold,
-    color: theme.colors.dark,
+    color: '#64748B',
+  },
+
+  privacyNote: {
+    fontSize: theme.typography.fontSize.xs,
+    fontFamily: theme.typography.regular,
+    color: '#9E9E9E',
+    textAlign: 'center',
+    marginTop: height * 0.025,
+    lineHeight: 18,
+    paddingHorizontal: width * 0.05,
   },
 });

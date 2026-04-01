@@ -228,6 +228,44 @@ export const updateLocation = createAsyncThunk(
   },
 );
 
+export const toggleStealthMode = createAsyncThunk(
+  'user/toggleStealthMode',
+  async (_, { rejectWithValue }) => {
+    try {
+      const token = await getToken(rejectWithValue);
+
+      const response = await axios.post(
+        `${BACKEND_API_URL}/user/stealth/toggle-stealth-mode`,
+        {},
+        {
+          headers: { Authorization: `Bearer ${token}` },
+        },
+      );
+
+      const { success, message, isStealthModeEnabled } = response.data;
+
+      if (!success) {
+        throw new Error(message);
+      }
+
+      return {
+        success,
+        message,
+        isStealthModeEnabled,
+      };
+    } catch (error) {
+      const backend = error.response?.data;
+
+      return rejectWithValue({
+        message:
+          backend?.message || error.message || 'Failed to toggle stealth mode',
+        status: error.response?.status || 0,
+        success: backend?.success ?? false,
+      });
+    }
+  },
+);
+
 const initialState = {
   user: null,
   loading: false,
@@ -346,6 +384,24 @@ const userSlice = createSlice({
         state.message = action.payload?.message;
       })
       .addCase(updateLocation.rejected, (state, action) => {
+        state.loading = false;
+        state.error = action.payload;
+        state.message = action.payload?.message;
+      })
+
+      .addCase(toggleStealthMode.pending, state => {
+        state.loading = true;
+        state.error = null;
+        state.message = null;
+      })
+      .addCase(toggleStealthMode.fulfilled, (state, action) => {
+        state.loading = false;
+        state.message = action.payload.message;
+        if (state.user) {
+          state.user.isStealthModeEnabled = action.payload.isStealthModeEnabled;
+        }
+      })
+      .addCase(toggleStealthMode.rejected, (state, action) => {
         state.loading = false;
         state.error = action.payload;
         state.message = action.payload?.message;
