@@ -195,7 +195,7 @@ exports.getAllYogaGuides = async (req, res) => {
  */
 exports.getYogaGuideById = async (req, res) => {
   try {
-    const yogaGuide = await Yoga.findById(req.params.yogaId)     
+    const yogaGuide = await Yoga.findById(req.params.yogaId);
 
     if (!yogaGuide) {
       return res.status(404).json({
@@ -217,7 +217,6 @@ exports.getYogaGuideById = async (req, res) => {
     });
   }
 };
-
 
 /**
  * Update an existing yoga guide

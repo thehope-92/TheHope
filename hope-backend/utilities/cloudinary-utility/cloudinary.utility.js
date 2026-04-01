@@ -159,11 +159,6 @@ exports.uploadToCloudinary = async (file, type, existingPublicId = null) => {
  * @async
  * @param {string} [fileUrl] - Cloudinary secure_url (or empty/no-op)
  */
-/**
- * Delete a file from Cloudinary using its secure_url
- * @async
- * @param {string} [fileUrl] - Cloudinary secure_url
- */
 exports.deleteFromCloudinary = async (fileUrl) => {
   if (!fileUrl) return;
 
