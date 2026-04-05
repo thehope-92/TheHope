@@ -55,6 +55,15 @@ import YogaDetail from '../screens/yoga-guide-screen/yoga-detail-screen/YogaDeta
 import CreateHabit from '../screens/habit-screen/create-habit/CreateHabit';
 import UpdateHabit from '../screens/habit-screen/update-habit/UpdateHabit';
 
+// Decoy Screen
+import Decoy from '../screens/decoy-screen/Decoy';
+
+//Stealth Screen
+import ChangeStealthPin from '../screens/profile-screen/sub-screens/ChangeStealthPin';
+
+//Directory Screen
+import Directory from '../screens/expert-directory-screen/Directory';
+
 const Stack = createNativeStackNavigator();
 
 const AppNavigator = () => {
@@ -178,6 +187,31 @@ const AppNavigator = () => {
         <Stack.Screen name="Update_Habit">
           {props => (
             <UpdateHabit {...props} setStatusBarColor={setStatusBarColor} />
+          )}
+        </Stack.Screen>
+
+        {/* --- DECOY SCREEN --- */}
+        <Stack.Screen name="Decoy">
+          {props => <Decoy {...props} setStatusBarColor={setStatusBarColor} />}
+        </Stack.Screen>
+
+        {/* --- CHANGE PIN SCREEN --- */}
+        <Stack.Screen name="Change_Pin">
+          {props => (
+            <ChangeStealthPin
+              {...props}
+              setStatusBarColor={setStatusBarColor}
+            />
+          )}
+        </Stack.Screen>
+
+        {/* --- DIRECTORY SCREEN --- */}
+        <Stack.Screen name="Emergency_help">
+          {props => (
+            <Directory
+              {...props}
+              setStatusBarColor={setStatusBarColor}
+            />
           )}
         </Stack.Screen>
       </Stack.Navigator>

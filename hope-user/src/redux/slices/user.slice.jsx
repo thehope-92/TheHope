@@ -228,37 +228,184 @@ export const updateLocation = createAsyncThunk(
   },
 );
 
-export const toggleStealthMode = createAsyncThunk(
-  'user/toggleStealthMode',
-  async (_, { rejectWithValue }) => {
+/* ====================== STEALTH MODE THUNKS ====================== */
+
+/**
+ * 1. SET STEALTH PIN (FIRST TIME ONLY)
+ * User sets their own 4-6 digit PIN and stealth mode gets enabled
+ */
+export const setStealthPIN = createAsyncThunk(
+  'user/setStealthPIN',
+  async (pin, { rejectWithValue }) => {
     try {
       const token = await getToken(rejectWithValue);
 
       const response = await axios.post(
-        `${BACKEND_API_URL}/user/stealth/toggle-stealth-mode`,
-        {},
+        `${BACKEND_API_URL}/user/stealth/set-stealth-pin`,
+        { pin },
         {
           headers: { Authorization: `Bearer ${token}` },
         },
       );
 
-      const { success, message, isStealthModeEnabled } = response.data;
-
-      if (!success) {
-        throw new Error(message);
-      }
-
-      return {
-        success,
-        message,
-        isStealthModeEnabled,
-      };
+      return response.data; // { success, message, data }
     } catch (error) {
       const backend = error.response?.data;
-
       return rejectWithValue({
         message:
-          backend?.message || error.message || 'Failed to toggle stealth mode',
+          backend?.message || error.message || 'Failed to set stealth PIN',
+        status: error.response?.status || 0,
+        success: backend?.success ?? false,
+      });
+    }
+  },
+);
+
+/**
+ * 2. ENABLE STEALTH MODE (Subsequent times - after disable)
+ * User enters their existing PIN to re-enable stealth mode
+ */
+export const enableStealthMode = createAsyncThunk(
+  'user/enableStealthMode',
+  async (pin, { rejectWithValue }) => {
+    try {
+      const token = await getToken(rejectWithValue);
+
+      const response = await axios.post(
+        `${BACKEND_API_URL}/user/stealth/enable-stealth-mode`,
+        { pin },
+        {
+          headers: { Authorization: `Bearer ${token}` },
+        },
+      );
+
+      return response.data;
+    } catch (error) {
+      const backend = error.response?.data;
+      return rejectWithValue({
+        message:
+          backend?.message || error.message || 'Failed to enable stealth mode',
+        status: error.response?.status || 0,
+        success: backend?.success ?? false,
+      });
+    }
+  },
+);
+
+/**
+ * 3. VERIFY STEALTH PIN (Called on every app launch when stealth is enabled)
+ * Correct PIN → Real app
+ * Wrong PIN → Decoy screen
+ */
+export const verifyStealthPIN = createAsyncThunk(
+  'user/verifyStealthPIN',
+  async (pin, { rejectWithValue }) => {
+    try {
+      const token = await getToken(rejectWithValue);
+
+      const response = await axios.post(
+        `${BACKEND_API_URL}/user/stealth/verify-stealth-pin`,
+        { pin },
+        {
+          headers: { Authorization: `Bearer ${token}` },
+        },
+      );
+
+      return response.data;
+    } catch (error) {
+      const backend = error.response?.data;
+      return rejectWithValue({
+        message: backend?.message || error.message || 'PIN verification failed',
+        status: error.response?.status || 0,
+        success: backend?.success ?? false,
+      });
+    }
+  },
+);
+
+/**
+ * 4. DISABLE STEALTH MODE
+ */
+export const disableStealthMode = createAsyncThunk(
+  'user/disableStealthMode',
+  async (pin, { rejectWithValue }) => {
+    try {
+      const token = await getToken(rejectWithValue);
+
+      const response = await axios.post(
+        `${BACKEND_API_URL}/user/stealth/disable-stealth-mode`,
+        { pin },
+        {
+          headers: { Authorization: `Bearer ${token}` },
+        },
+      );
+
+      return response.data;
+    } catch (error) {
+      const backend = error.response?.data;
+      return rejectWithValue({
+        message:
+          backend?.message || error.message || 'Failed to disable stealth mode',
+        status: error.response?.status || 0,
+        success: backend?.success ?? false,
+      });
+    }
+  },
+);
+
+/**
+ * 5. GET STEALTH STATUS (Call on every app launch)
+ * Used to decide whether to show PIN screen or real app
+ */
+export const getStealthStatus = createAsyncThunk(
+  'user/getStealthStatus',
+  async (_, { rejectWithValue }) => {
+    try {
+      const token = await getToken(rejectWithValue);
+
+      const response = await axios.get(
+        `${BACKEND_API_URL}/user/stealth/get-stealth-status`,
+        {
+          headers: { Authorization: `Bearer ${token}` },
+        },
+      );
+
+      return response.data; // { success, data: { isStealthModeEnabled, ... } }
+    } catch (error) {
+      const backend = error.response?.data;
+      return rejectWithValue({
+        message:
+          backend?.message || error.message || 'Failed to get stealth status',
+        status: error.response?.status || 0,
+        success: backend?.success ?? false,
+      });
+    }
+  },
+);
+
+/**
+ * 6. CHANGE STEALTH PIN
+ * Works even if stealth mode is currently disabled (as long as PIN was set before)
+ */
+export const changeStealthPIN = createAsyncThunk(
+  'user/changeStealthPIN',
+  async ({ oldPin, newPin }, { rejectWithValue }) => {
+    try {
+      const token = await getToken(rejectWithValue);
+
+      const response = await axios.patch(
+        `${BACKEND_API_URL}/user/stealth/change-stealth-pin`,
+        { oldPin, newPin },
+        {
+          headers: { Authorization: `Bearer ${token}` },
+        },
+      );
+
+      return response.data;
+    } catch (error) {
+      const backend = error.response?.data;
+      return rejectWithValue({
+        message: backend?.message || error.message || 'Failed to change PIN',
         status: error.response?.status || 0,
         success: backend?.success ?? false,
       });
@@ -389,19 +536,116 @@ const userSlice = createSlice({
         state.message = action.payload?.message;
       })
 
-      .addCase(toggleStealthMode.pending, state => {
+      .addCase(setStealthPIN.pending, state => {
         state.loading = true;
         state.error = null;
         state.message = null;
       })
-      .addCase(toggleStealthMode.fulfilled, (state, action) => {
+      .addCase(setStealthPIN.fulfilled, (state, action) => {
         state.loading = false;
         state.message = action.payload.message;
         if (state.user) {
-          state.user.isStealthModeEnabled = action.payload.isStealthModeEnabled;
+          state.user.isStealthModeEnabled = true;
         }
       })
-      .addCase(toggleStealthMode.rejected, (state, action) => {
+      .addCase(setStealthPIN.rejected, (state, action) => {
+        state.loading = false;
+        state.error = action.payload;
+        state.message = action.payload?.message;
+      })
+
+      // ENABLE STEALTH MODE (Subsequent times)
+      .addCase(enableStealthMode.pending, state => {
+        state.loading = true;
+        state.error = null;
+        state.message = null;
+      })
+      .addCase(enableStealthMode.fulfilled, (state, action) => {
+        state.loading = false;
+        state.message = action.payload.message;
+        if (state.user) {
+          state.user.isStealthModeEnabled = true;
+        }
+      })
+      .addCase(enableStealthMode.rejected, (state, action) => {
+        state.loading = false;
+        state.error = action.payload;
+        state.message = action.payload?.message;
+      })
+
+      // VERIFY STEALTH PIN (Every app launch)
+      .addCase(verifyStealthPIN.pending, state => {
+        state.loading = true;
+        state.error = null;
+        state.message = null;
+      })
+      .addCase(verifyStealthPIN.fulfilled, (state, action) => {
+        state.loading = false;
+        state.message = action.payload.message;
+        if (state.user) {
+          state.user.isStealthModeEnabled = true; // already enabled, just confirmed
+        }
+      })
+      .addCase(verifyStealthPIN.rejected, (state, action) => {
+        state.loading = false;
+        state.error = action.payload;
+        state.message = action.payload?.message;
+      })
+
+      // DISABLE STEALTH MODE
+      .addCase(disableStealthMode.pending, state => {
+        state.loading = true;
+        state.error = null;
+        state.message = null;
+      })
+      .addCase(disableStealthMode.fulfilled, (state, action) => {
+        state.loading = false;
+        state.message = action.payload.message;
+        if (state.user) {
+          state.user.isStealthModeEnabled = false;
+        }
+      })
+      .addCase(disableStealthMode.rejected, (state, action) => {
+        state.loading = false;
+        state.error = action.payload;
+        state.message = action.payload?.message;
+      })
+
+      // GET STEALTH STATUS (Most important - called on every app launch)
+      .addCase(getStealthStatus.pending, state => {
+        state.loading = true;
+        state.error = null;
+        state.message = null;
+      })
+      .addCase(getStealthStatus.fulfilled, (state, action) => {
+        state.loading = false;
+        state.message = action.payload.message || 'Stealth status fetched';
+
+        // Update user object with latest stealth info
+        if (state.user && action.payload.data) {
+          state.user.isStealthModeEnabled =
+            action.payload.data.isStealthModeEnabled;
+          // Optional: you can also store full stealth data if needed
+          state.user.stealthStatus = action.payload.data; // extra safety
+        }
+      })
+      .addCase(getStealthStatus.rejected, (state, action) => {
+        state.loading = false;
+        state.error = action.payload;
+        state.message = action.payload?.message;
+      })
+
+      // CHANGE STEALTH PIN
+      .addCase(changeStealthPIN.pending, state => {
+        state.loading = true;
+        state.error = null;
+        state.message = null;
+      })
+      .addCase(changeStealthPIN.fulfilled, (state, action) => {
+        state.loading = false;
+        state.message = action.payload.message;
+      })
+      .addCase(changeStealthPIN.rejected, (state, action) => {
         state.loading = false;
         state.error = action.payload;
         state.message = action.payload?.message;

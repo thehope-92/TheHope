@@ -16,6 +16,7 @@ import {
   Linking,
   TouchableOpacity,
   Animated,
+  TextInput,
 } from 'react-native';
 import MaterialCommunityIcons from 'react-native-vector-icons/MaterialCommunityIcons';
 import { theme } from '../../styles/Themes';
@@ -23,7 +24,9 @@ import { useDispatch, useSelector } from 'react-redux';
 import {
   deleteAccount,
   getUser,
-  toggleStealthMode,
+  setStealthPIN,
+  enableStealthMode,
+  disableStealthMode,
 } from '../../redux/slices/user.slice';
 import Header from '../../utilities/custom-components/header/header/Header';
 import ProfileCard from '../../utilities/custom-components/card/profile-card/ProfileCard';
@@ -47,17 +50,15 @@ const Profile = () => {
   const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [showSupportModal, setShowSupportModal] = useState(false);
   const [deleteReason, setDeleteReason] = useState('');
-  const [isStealthMode, setIsStealthMode] = useState(false);
+  const [pin, setPin] = useState('');
+  const [showPinModal, setShowPinModal] = useState(false);
   const [stealthLoading, setStealthLoading] = useState(false);
+  const isStealthModeEnabled = profile?.isStealthModeEnabled || false;
+  const [isDisabling, setIsDisabling] = useState(false);
 
   const toggleAnim = useRef(new Animated.Value(0)).current;
 
-  // Sync with Redux
-  useEffect(() => {
-    if (profile?.isStealthModeEnabled !== undefined) {
-      setIsStealthMode(profile.isStealthModeEnabled);
-    }
-  }, [profile]);
+  const pinRefs = useRef([]);
 
   // Fetch latest user data when screen is focused
   useFocusEffect(
@@ -77,11 +78,11 @@ const Profile = () => {
   // Smooth toggle animation
   useEffect(() => {
     Animated.timing(toggleAnim, {
-      toValue: isStealthMode ? 1 : 0,
+      toValue: isStealthModeEnabled ? 1 : 0,
       duration: 280,
       useNativeDriver: false,
     }).start();
-  }, [isStealthMode]);
+  }, [isStealthModeEnabled]);
 
   const translateX = toggleAnim.interpolate({
     inputRange: [0, 1],
@@ -92,62 +93,6 @@ const Profile = () => {
     inputRange: [0, 1],
     outputRange: ['#CBD5E1', '#22C55E'],
   });
-
-  // const changeAppIcon = async toStealth => {
-  //   try {
-  //     if (toStealth) {
-  //       await AppIcon.setAppIcon('MainActivityStealthIcon');
-  //     } else {
-  //       await resetAlternateIconName();
-  //     }
-  //     console.log(
-  //       `✅ App icon changed to ${toStealth ? 'STEALTH' : 'DEFAULT'}`,
-  //     );
-  //   } catch (err) {
-  //     console.warn('Icon change failed (normal on simulators):', err.message);
-  //   }
-  // };
-
-  // const handleToggleStealthMode = async () => {
-  //   setStealthLoading(true);
-
-  //   try {
-  //     const resultAction = await dispatch(toggleStealthMode());
-
-  //     if (toggleStealthMode.fulfilled.match(resultAction)) {
-  //       const newState = resultAction.payload.isStealthModeEnabled;
-  //       setIsStealthMode(newState);
-
-  //       await changeAppIcon(newState);
-
-  //       Toast.show({
-  //         type: 'success',
-  //         text1: newState
-  //           ? 'Stealth Mode Activated'
-  //           : 'Stealth Mode Deactivated',
-  //         text2: newState
-  //           ? 'App icon changed to private mode'
-  //           : 'Original app icon restored',
-  //         visibilityTime: 2400,
-  //       });
-  //     } else {
-  //       Toast.show({
-  //         type: 'error',
-  //         text1: 'Failed',
-  //         text2:
-  //           resultAction.payload?.message || 'Unable to toggle stealth mode',
-  //       });
-  //     }
-  //   } catch (error) {
-  //     Toast.show({
-  //       type: 'error',
-  //       text1: 'Error',
-  //       text2: error?.message || 'Something went wrong',
-  //     });
-  //   } finally {
-  //     setStealthLoading(false);
-  //   }
-  // };
 
   const handleProfileNavigate = () => {
     navigation.navigate('My_Profile', { user: profile });
@@ -236,6 +181,150 @@ const Profile = () => {
     }
   };
 
+  const handleToggleStealthMode = () => {
+    setPin('');
+    // Agar Stealth enabled hai, toh hum disable mode (isDisabling = true) mein ja rahe hain
+    setIsDisabling(isStealthModeEnabled);
+    setShowPinModal(true);
+  };
+
+  const handlePinSubmit = async () => {
+    if (pin.length !== 4) {
+      Toast.show({
+        type: 'error',
+        text1: 'Invalid PIN',
+        text2: 'Please enter a 4-digit PIN',
+      });
+      return;
+    }
+
+    setStealthLoading(true);
+    try {
+      const hasPinSet = !!profile?.stealth?.hasStealthPin;
+      let response;
+
+      if (isDisabling) {
+        // CASE 1: Turn OFF
+        response = await dispatch(disableStealthMode(pin)).unwrap();
+        Toast.show({
+          type: 'success',
+          text1: 'Success',
+          text2: response?.message || '',
+        });
+      } else {
+        // CASE 2 & 3: Turn ON or Set PIN
+        if (hasPinSet) {
+          response = await dispatch(enableStealthMode(pin)).unwrap();
+        } else {
+          response = await dispatch(setStealthPIN(pin)).unwrap();
+        }
+
+        setShowPinModal(false);
+        setPin('');
+
+        Toast.show({
+          type: 'success',
+          text1: 'Success',
+          text2: response?.message || '',
+        });
+
+        setTimeout(() => {
+          navigation.replace('Decoy');
+        }, 1500);
+
+        return;
+      }
+
+      setShowPinModal(false);
+      setPin('');
+    } catch (err) {
+      Toast.show({
+        type: 'error',
+        text1: 'Failure',
+        text2: err?.message || '',
+      });
+    } finally {
+      setStealthLoading(false);
+    }
+  };
+
+  const renderPinInput = () => {
+    const hasPinSet = !!profile?.stealth?.hasStealthPin;
+
+    const title = isDisabling
+      ? 'Disable Stealth Mode'
+      : hasPinSet
+      ? 'Enable Stealth Mode'
+      : 'Set 4-Digit PIN';
+
+    const subtitle = isDisabling
+      ? 'Enter your PIN to turn off stealth mode'
+      : hasPinSet
+      ? 'Enter your existing PIN to enable'
+      : 'Create a secure 4-digit PIN for privacy';
+
+    const buttonText = isDisabling
+      ? 'Disable Stealth Mode'
+      : hasPinSet
+      ? 'Enable Stealth Mode'
+      : 'Activate Stealth Mode';
+
+    const buttonColor = isDisabling ? '#F44336' : theme.colors.primary;
+
+    return (
+      <View style={styles.pinContainer}>
+        <Text style={[styles.pinTitle, { color: theme.colors.white }]}>
+          {title}
+        </Text>
+        <Text style={styles.pinSubtitle}>{subtitle}</Text>
+
+        <View style={styles.pinWrapper}>
+          {[0, 1, 2, 3].map(index => (
+            <View key={index} style={styles.pinBoxContainer}>
+              <TextInput
+                ref={ref => (pinRefs.current[index] = ref)}
+                style={styles.pinBoxInput}
+                keyboardType="number-pad"
+                maxLength={1}
+                secureTextEntry={true} // PIN ko hide rakhne ke liye
+                value={pin[index] || ''}
+                onChangeText={text => {
+                  const newPin = pin.split('');
+                  newPin[index] = text;
+                  setPin(newPin.join('').replace(/[^0-9]/g, ''));
+
+                  if (text && index < 3) {
+                    pinRefs.current[index + 1]?.focus();
+                  }
+                }}
+                onKeyPress={e => {
+                  if (
+                    e.nativeEvent.key === 'Backspace' &&
+                    !pin[index] &&
+                    index > 0
+                  ) {
+                    pinRefs.current[index - 1]?.focus();
+                  }
+                }}
+                selectionColor={theme.colors.primary}
+              />
+            </View>
+          ))}
+        </View>
+
+        <Button
+          title={buttonText}
+          onPress={handlePinSubmit}
+          loading={stealthLoading}
+          backgroundColor={buttonColor}
+          textColor={theme.colors.white}
+          disabled={pin.length !== 4}
+          width="100%"
+        />
+      </View>
+    );
+  };
+
   return (
     <View style={styles.container}>
       <View style={styles.headerContainer}>
@@ -272,27 +361,27 @@ const Profile = () => {
         </View>
 
         <View style={styles.menuGroup}>
-          {/* Stealth Mode Toggle */}
+          {/* STEALTH MODE TOGGLE */}
           <View style={styles.stealthRow}>
             <View style={styles.stealthInfo}>
               <MaterialCommunityIcons
                 name="incognito"
                 size={28}
-                color={isStealthMode ? theme.colors.primary : '#8E8E93'}
+                color={isStealthModeEnabled ? theme.colors.primary : '#8E8E93'}
               />
-              <View style={styles.stealthTextContainer}>
+              <View>
                 <Text style={styles.stealthTitle}>Stealth Mode</Text>
                 <Text style={styles.stealthDescription}>
-                  {isStealthMode
-                    ? 'App icon hidden • Activity is private'
-                    : 'Hide app from others'}
+                  {isStealthModeEnabled
+                    ? 'App is hidden behind PIN'
+                    : 'Protect your privacy'}
                 </Text>
               </View>
             </View>
 
             <TouchableOpacity
               activeOpacity={0.85}
-              // onPress={handleToggleStealthMode}
+              onPress={handleToggleStealthMode}
               disabled={stealthLoading}
               style={styles.toggleWrapper}
             >
@@ -307,10 +396,17 @@ const Profile = () => {
           </View>
 
           <ProfileCard
+            title="Change Pin"
+            iconName="reload"
+            navigationTarget={'Change_Pin'}
+          />
+
+          <ProfileCard
             title="Logout"
             iconName="logout-variant"
             onPressFunction={handleLogout}
           />
+
           <ProfileCard
             title="Delete Account"
             iconName="account-remove-outline"
@@ -465,6 +561,22 @@ const Profile = () => {
           </Text>
         </View>
       </Modal>
+
+      {/* ====================== ULTRA ENHANCED PIN MODAL ====================== */}
+      <Modal
+        isOpen={showPinModal}
+        onClose={() => {
+          setShowPinModal(false);
+          setPin('');
+        }}
+        title={isDisabling ? 'Disable Stealth Mode' : 'Enable Stealth Mode'}
+        subtitle={
+          isDisabling ? 'Enter your PIN to disable' : 'Your privacy shield'
+        }
+        showCloseButton={true}
+      >
+        {renderPinInput()}
+      </Modal>
     </View>
   );
 };
@@ -511,10 +623,6 @@ const styles = StyleSheet.create({
     gap: width * 0.04,
   },
 
-  stealthTextContainer: {
-    flex: 1,
-  },
-
   stealthTitle: {
     fontSize: theme.typography.fontSize.md,
     fontFamily: theme.typography.semiBold,
@@ -526,10 +634,10 @@ const styles = StyleSheet.create({
     fontFamily: theme.typography.regular,
     color: '#64748B',
     marginTop: 2,
-  },  
+  },
 
-  toggleWrapper:{
-    marginLeft: -width * 0.1
+  toggleWrapper: {
+    marginLeft: -width * 0.1,
   },
 
   toggleTrack: {
@@ -550,6 +658,79 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.25,
     shadowRadius: 4,
     elevation: 4,
+  },
+
+  // PIN MODAL STYLES
+
+  // ==================== PIN BOX STYLES (Add these) ====================
+  pinWrapper: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    width: '100%',
+    marginBottom: height * 0.06,
+    paddingHorizontal: width * 0.02,
+  },
+
+  pinContainer: {
+    alignItems: 'center',
+    paddingVertical: height * 0.02,
+  },
+
+  pinTitle: {
+    fontFamily: theme.typography.bold,
+    fontSize: theme.typography.fontSize.xl,
+    color: theme.colors.white,
+    marginBottom: height * 0.01,
+  },
+
+  pinSubtitle: {
+    fontFamily: theme.typography.regular,
+    fontSize: theme.typography.fontSize.sm,
+    color: theme.colors.gray,
+    textAlign: 'center',
+    marginBottom: height * 0.04,
+    paddingHorizontal: width * 0.08,
+  },
+
+  pinBoxes: {
+    flexDirection: 'row',
+    gap: width * 0.04,
+    marginBottom: height * 0.05,
+  },
+
+  pinBoxContainer: {
+    width: width * 0.16,
+    height: width * 0.16,
+    borderRadius: theme.borderRadius.large,
+    backgroundColor: '#1E1E1E',
+    borderWidth: 2,
+    borderColor: '#333',
+    justifyContent: 'center',
+    alignItems: 'center',
+    elevation: 4,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.3,
+    shadowRadius: 8,
+  },
+
+  pinBoxFilled: {
+    borderColor: theme.colors.white,
+    backgroundColor: theme.colors.white,
+  },
+
+  pinBoxInput: {
+    width: '100%',
+    height: '100%',
+    textAlign: 'center',
+    fontSize: theme.typography.fontSize.md,
+    fontFamily: theme.typography.bold,
+  },
+
+  pinDigit: {
+    fontSize: theme.typography.fontSize.sm,
+    color: theme.colors.dark,
+    fontFamily: theme.typography.semiBold,
   },
 
   enhancedModalContent: {

@@ -97,14 +97,69 @@ router.post(
 );
 
 /**
- * @description Toggle Stealth Mode for User Privacy
- * @route   POST /api/user/stealth/toggle-stealth-mode
+ * @description Set Stealth Mode PIN for User Privacy
+ * @route   POST /api/user/stealth/set-stealth-pin
  * @access  Private (User)
  */
 router.post(
-  "/stealth/toggle-stealth-mode",
+  "/stealth/set-stealth-pin",
   encryptedAuthMiddleware,
-  userController.toggleStealthMode,
+  userController.setStealthPIN,
+);
+
+/**
+ * @description Verify Stealth Mode PIN for User Privacy
+ * @route   POST /api/user/stealth/verify-stealth-pin
+ * @access  Private (User)
+ */
+router.post(
+  "/stealth/verify-stealth-pin",
+  encryptedAuthMiddleware,
+  userController.verifyStealthPIN,
+);
+
+/**
+ * @description Enable Stealth Mode
+ * @route   POST /api/user/stealth/enable-stealth-mode
+ * @access  Private (User)
+ */
+router.post(
+  "/stealth/enable-stealth-mode",
+  encryptedAuthMiddleware,
+  userController.enableStealthMode,
+);
+
+/**
+ * @description Disable Stealth Mode
+ * @route   POST /api/user/stealth/disable-stealth-mode
+ * @access  Private (User)
+ */
+router.post(
+  "/stealth/disable-stealth-mode",
+  encryptedAuthMiddleware,
+  userController.disableStealthMode,
+);
+
+/**
+ * @description Get stealth mode status for user
+ * @route   GET /api/user/stealth/get-stealth-status
+ * @access  Private (User)
+ */
+router.get(
+  "/stealth/get-stealth-status",
+  encryptedAuthMiddleware,
+  userController.getStealthStatus,
+);
+
+/**
+ * @description Change stealth mode PIN
+ * @route   PATCH /api/user/stealth/change-stealth-pin
+ * @access  Private (User)
+ */
+router.patch(
+  "/stealth/change-stealth-pin",
+  encryptedAuthMiddleware,
+  userController.changeStealthPIN,
 );
 
 /**

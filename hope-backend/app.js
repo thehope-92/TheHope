@@ -29,8 +29,8 @@ securityMiddleware(app);
 app.use(cookieParser());
 
 // Regular JSON parsing for all other routes
-app.use(express.json({ limit: "50mb" }));
-app.use(express.urlencoded({ extended: true, limit: "50mb" }));
+app.use(express.json({ limit: "20kb" }));
+app.use(express.urlencoded({ extended: true, limit: "20kb" }));
 
 // Logging only in development
 if (process.env.NODE_ENV !== "production") {

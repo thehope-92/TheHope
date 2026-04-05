@@ -597,36 +597,438 @@ exports.verifyEmail = async (req, res) => {
   }
 };
 
-/**
- * Toggle Stealth Mode for Privacy
- * @access Private (User)
- */
-exports.toggleStealthMode = async (req, res) => {
-  try {
-    const user = await User.findById(req.user.id);
+/* ====================== STEALTH MODE HELPERS (keep these at the top of user.controller.js) ====================== */
+const hashPIN = async (pin) => {
+  const salt = await bcrypt.genSalt(12);
+  return await bcrypt.hash(pin, salt);
+};
 
-    if (!user) {
+const verifyPIN = async (pin, hash) => {
+  return await bcrypt.compare(pin, hash);
+};
+
+/* ====================== STEALTH MODE CONTROLLERS (FULL UPDATED VERSION) ====================== */
+
+/**
+ * SET STEALTH PIN + ENABLE (FIRST TIME ONLY)
+ * Called only when user has NEVER set a PIN before.
+ * User provides their own 4-6 digit PIN.
+ * @route   POST /api/user/stealth/set-stealth-pin
+ * @access  Private
+ * @body    { pin: string }
+ */
+exports.setStealthPIN = async (req, res) => {
+  try {
+    const { pin } = req.body;
+    const userId = req.user.id;
+
+    if (!pin || !/^\d{4,6}$/.test(pin)) {
       return res
-        .status(404)
-        .json({ success: false, message: "User not found" });
+        .status(400)
+        .json({ success: false, message: "PIN must be 4 to 6 digits" });
     }
 
-    // Explicitly flip the specific field from your schema
-    // This ensures that if it's currently true, it becomes false, and vice versa.
-    user.isStealthModeEnabled = !user.isStealthModeEnabled;
+    const user = await User.findById(userId);
+
+    // Check if PIN already exists using the new boolean
+    if (user.stealth.hasStealthPin) {
+      return res.status(400).json({
+        success: false,
+        message: "PIN already set. Use enable-stealth-mode.",
+      });
+    }
+
+    const hashedPIN = await hashPIN(pin);
+
+    // Update fields
+    user.isStealthModeEnabled = true;
+    user.stealth.pinHash = hashedPIN;
+    user.stealth.hasStealthPin = true; // ✅ Mark as true
+    user.stealth.pinAttempts = 0;
+    user.stealth.enabledAt = new Date();
 
     await user.save();
 
     res.status(200).json({
       success: true,
-      message: user.isStealthModeEnabled
-        ? "Stealth Mode Activated"
-        : "Stealth Mode Deactivated",
-      isStealthModeEnabled: user.isStealthModeEnabled,
+      message: "Stealth PIN set successfully",
+      user: {
+        isStealthModeEnabled: true,
+        hasStealthPin: true,
+      },
     });
   } catch (error) {
-    console.error("Stealth Toggle Error:", error);
+    console.error(error);
     res.status(500).json({ success: false, message: "Internal server error" });
+  }
+};
+
+/**
+ * ENABLE STEALTH MODE (SUBSEQUENT TIMES)
+ * User enters the ALREADY SET PIN (no need to set new PIN).
+ * PIN is verified → stealth mode becomes active again.
+ * @route   POST /api/user/stealth/enable-stealth-mode
+ * @access  Private
+ * @body    { pin: string }
+ */
+exports.enableStealthMode = async (req, res) => {
+  try {
+    const { pin } = req.body;
+    const userId = req.user.id;
+
+    if (!pin) {
+      return res.status(400).json({
+        success: false,
+        message: "PIN is required to enable stealth mode",
+      });
+    }
+
+    const user = await User.findById(userId).select("+stealth.pinHash");
+    if (!user) {
+      return res.status(404).json({
+        success: false,
+        message: "User not found",
+      });
+    }
+
+    if (user.isStealthModeEnabled) {
+      return res.status(400).json({
+        success: false,
+        message: "Stealth mode is already enabled",
+      });
+    }
+
+    // Must have a previously set PIN
+    if (!user.stealth.pinHash) {
+      return res.status(400).json({
+        success: false,
+        message: "No PIN is set yet. Please use set-stealth-pin first.",
+      });
+    }
+
+    // Check lockout
+    if (user.isPinLocked) {
+      const remainingMinutes = user.pinLockRemainingMinutes;
+      return res.status(403).json({
+        success: false,
+        message: `Too many failed attempts. Try again in ${remainingMinutes} minutes.`,
+        locked: true,
+        remainingMinutes,
+      });
+    }
+
+    const isValidPIN = await verifyPIN(pin, user.stealth.pinHash);
+
+    if (!isValidPIN) {
+      user.stealth.pinAttempts += 1;
+
+      if (user.stealth.pinAttempts >= 5) {
+        user.stealth.pinLockedUntil = new Date(Date.now() + 30 * 60 * 1000);
+        user.stealth.pinAttempts = 0;
+      }
+      await user.save();
+
+      return res.status(401).json({
+        success: false,
+        message: "Incorrect PIN",
+        remainingAttempts: 5 - user.stealth.pinAttempts,
+      });
+    }
+
+    // ✅ Correct PIN → Re-enable stealth (PIN remains the same)
+    user.isStealthModeEnabled = true;
+    user.stealth.pinAttempts = 0;
+    user.stealth.pinLockedUntil = null;
+    user.stealth.enabledAt = new Date();
+    user.stealth.lastVerifiedAt = new Date();
+
+    await user.save();
+
+    res.status(200).json({
+      success: true,
+      message: "Stealth mode enabled successfully using your existing PIN.",
+      data: {
+        isStealthModeEnabled: true,
+      },
+    });
+  } catch (error) {
+    console.error("Enable Stealth Mode Error:", error);
+    res.status(500).json({
+      success: false,
+      message: "Internal server error",
+    });
+  }
+};
+
+/**
+ * VERIFY PIN – Called on every app launch when stealth is enabled
+ * Correct → Real app
+ * Wrong → Decoy screen
+ * @route   POST /api/user/stealth/verify-stealth-pin
+ * @access  Private
+ * @body    { pin: string }
+ */
+exports.verifyStealthPIN = async (req, res) => {
+  try {
+    const { pin } = req.body;
+    const userId = req.user.id;
+
+    if (!pin) {
+      return res.status(400).json({
+        success: false,
+        message: "PIN is required",
+      });
+    }
+
+    const user = await User.findById(userId).select("+stealth.pinHash");
+    if (!user) {
+      return res.status(404).json({
+        success: false,
+        message: "User not found",
+      });
+    }
+
+    if (!user.isStealthModeEnabled) {
+      return res.status(200).json({
+        success: true,
+        message: "Stealth mode is not enabled",
+        isStealthModeEnabled: false,
+      });
+    }
+
+    if (user.isPinLocked) {
+      const remainingMinutes = user.pinLockRemainingMinutes;
+      return res.status(403).json({
+        success: false,
+        message: `Too many failed attempts. Try again in ${remainingMinutes} minutes.`,
+        locked: true,
+        remainingMinutes,
+      });
+    }
+
+    const isValidPIN = await verifyPIN(pin, user.stealth.pinHash);
+
+    if (!isValidPIN) {
+      user.stealth.pinAttempts += 1;
+      user.stealth.decoyShownAt = new Date();
+      user.stealth.decoyShownCount += 1;
+
+      if (user.stealth.pinAttempts >= 5) {
+        user.stealth.pinLockedUntil = new Date(Date.now() + 30 * 60 * 1000);
+        user.stealth.pinAttempts = 0;
+      }
+
+      await user.save();
+
+      return res.status(401).json({
+        success: false,
+        message: "Incorrect PIN – Decoy screen shown",
+        remainingAttempts: 5 - user.stealth.pinAttempts,
+      });
+    }
+
+    // Correct PIN
+    user.stealth.pinAttempts = 0;
+    user.stealth.pinLockedUntil = null;
+    user.stealth.lastVerifiedAt = new Date();
+
+    await user.save();
+
+    res.status(200).json({
+      success: true,
+      message: "PIN verified successfully",
+    });
+  } catch (error) {
+    console.error("Verify Stealth PIN Error:", error);
+    res.status(500).json({
+      success: false,
+      message: "Internal server error",
+    });
+  }
+};
+
+/**
+ * DISABLE STEALTH MODE
+ * Keeps the existing PIN (so user can re-enable later with same PIN)
+ * @route   POST /api/user/stealth/disable-stealth-mode
+ * @access  Private
+ * @body    { pin: string }
+ */
+exports.disableStealthMode = async (req, res) => {
+  try {
+    const { pin } = req.body;
+    const userId = req.user.id;
+
+    if (!pin) {
+      return res.status(400).json({
+        success: false,
+        message: "PIN is required to disable stealth mode",
+      });
+    }
+
+    const user = await User.findById(userId).select("+stealth.pinHash");
+    if (!user) {
+      return res.status(404).json({
+        success: false,
+        message: "User not found",
+      });
+    }
+
+    if (!user.isStealthModeEnabled) {
+      return res.status(400).json({
+        success: false,
+        message: "Stealth mode is not enabled",
+      });
+    }
+
+    if (user.isPinLocked) {
+      const remainingMinutes = user.pinLockRemainingMinutes;
+      return res.status(403).json({
+        success: false,
+        message: `Too many failed attempts. Try again in ${remainingMinutes} minutes.`,
+        locked: true,
+      });
+    }
+
+    const isValidPIN = await verifyPIN(pin, user.stealth.pinHash);
+
+    if (!isValidPIN) {
+      user.stealth.pinAttempts += 1;
+
+      if (user.stealth.pinAttempts >= 5) {
+        user.stealth.pinLockedUntil = new Date(Date.now() + 30 * 60 * 1000);
+        user.stealth.pinAttempts = 0;
+      }
+      await user.save();
+
+      return res.status(401).json({
+        success: false,
+        message: "Incorrect PIN",
+        remainingAttempts: 5 - user.stealth.pinAttempts,
+      });
+    }
+
+    // Disable only the flag – PIN remains saved for future re-enable
+    user.isStealthModeEnabled = false;
+    user.stealth.pinAttempts = 0;
+    user.stealth.pinLockedUntil = null;
+    user.stealth.authorizedSessions = [];
+    user.stealth.lastVerifiedAt = null;
+    user.stealth.disabledAt = new Date();
+
+    await user.save();
+
+    res.status(200).json({
+      success: true,
+      message:
+        "Stealth mode disabled successfully. Your PIN is still saved for next time.",
+      data: {
+        isStealthModeEnabled: false,
+      },
+    });
+  } catch (error) {
+    console.error("Disable Stealth Mode Error:", error);
+    res.status(500).json({
+      success: false,
+      message: "Server Error",
+    });
+  }
+};
+
+/**
+ * GET STEALTH STATUS – Call on every app launch
+ * @route   GET /api/user/stealth/get-stealth-status
+ * @access  Private
+ */
+exports.getStealthStatus = async (req, res) => {
+  try {
+    const user = await User.findById(req.user.id);
+    if (!user) {
+      return res.status(404).json({
+        success: false,
+        message: "User not found",
+      });
+    }
+
+    res.status(200).json({
+      success: true,
+      data: {
+        isStealthModeEnabled: user.isStealthModeEnabled,
+        isPinLocked: user.isPinLocked,
+        pinLockRemainingMinutes: user.pinLockRemainingMinutes,
+        hasPinSet: !!user.stealth.hasStealthPin, // helpful for frontend
+        lastVerifiedAt: user.stealth.lastVerifiedAt,
+        decoyShownCount: user.stealth.decoyShownCount,
+      },
+    });
+  } catch (error) {
+    console.error("Get Stealth Status Error:", error);
+    res.status(500).json({
+      success: false,
+      message: "Internal server error",
+    });
+  }
+};
+
+/**
+ * CHANGE STEALTH PIN (optional but recommended)
+ * @route   PATCH /api/user/stealth/change-stealth-pin
+ * @access  Private
+ * @body    { oldPin: string, newPin: string }
+ */
+exports.changeStealthPIN = async (req, res) => {
+  try {
+    const { oldPin, newPin } = req.body;
+    const userId = req.user.id;
+
+    if (!oldPin || !newPin || !/^\d{4,6}$/.test(newPin)) {
+      return res.status(400).json({
+        success: false,
+        message: "Old PIN and new PIN (4 digits) are required",
+      });
+    }
+
+    const user = await User.findById(userId).select("+stealth.pinHash");
+    if (!user) {
+      return res.status(404).json({
+        success: false,
+        message: "User not found",
+      });
+    }
+
+    if (!user.stealth.pinHash) {
+      return res.status(400).json({
+        success: false,
+        message: "No PIN is set yet",
+      });
+    }
+
+    const isValidOldPIN = await verifyPIN(oldPin, user.stealth.pinHash);
+    if (!isValidOldPIN) {
+      return res.status(401).json({
+        success: false,
+        message: "Invalid old PIN",
+      });
+    }
+
+    const hashedNewPIN = await hashPIN(newPin);
+
+    user.stealth.pinHash = hashedNewPIN;
+    user.stealth.pinAttempts = 0;
+    user.stealth.pinLockedUntil = null;
+
+    await user.save();
+
+    res.status(200).json({
+      success: true,
+      message: "PIN changed successfully",
+    });
+  } catch (error) {
+    console.error("Change Stealth PIN Error:", error);
+    res.status(500).json({
+      success: false,
+      message: "Internal server error",
+    });
   }
 };
 

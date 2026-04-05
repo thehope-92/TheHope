@@ -46,6 +46,7 @@ const InputField = ({
   dropdownOptions,
   selectedValue,
   onValueChange,
+  maxLength,
 }) => {
   const [open, setOpen] = useState(false);
 
@@ -93,6 +94,7 @@ const InputField = ({
           editable={editable}
           keyboardType={keyboardType}
           multiline={multiline}
+          maxLength={maxLength}
           style={[
             globalStyles.input,
             styles.textInput,
