@@ -27,8 +27,8 @@ import MaterialCommunityIcons from 'react-native-vector-icons/MaterialCommunityI
 import Toast from 'react-native-toast-message';
 import Slider from '@react-native-community/slider';
 import { theme } from '../../../styles/Themes';
-
 import InputField from '../../../utilities/custom-components/input-field/InputField.utility';
+import Header from '../../../utilities/custom-components/header/header/Header';
 
 const { width, height } = Dimensions.get('window');
 
@@ -187,9 +187,15 @@ const CreateMood = () => {
       style={styles.container}
     >
       <View style={styles.headerContainer}>
-        <SubHeader
+        <Header
+          showTopRow={false}
+          showLogo={true}
+          showAvatar={false}
+          showGreeting={false}
+          showTitle={true}
+          title={'Create Mood'}
           logo={require('../../../assets/logo/logo.png')}
-          title="Create Mood"
+          showSearch={false}
         />
       </View>
 

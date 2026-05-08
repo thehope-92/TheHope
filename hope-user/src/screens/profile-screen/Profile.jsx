@@ -226,11 +226,7 @@ const Profile = () => {
           type: 'success',
           text1: 'Success',
           text2: response?.message || '',
-        });
-
-        setTimeout(() => {
-          navigation.replace('Decoy');
-        }, 1500);
+        });        
 
         return;
       }
