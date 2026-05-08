@@ -208,10 +208,7 @@ const AppNavigator = () => {
         {/* --- DIRECTORY SCREEN --- */}
         <Stack.Screen name="Emergency_help">
           {props => (
-            <Directory
-              {...props}
-              setStatusBarColor={setStatusBarColor}
-            />
+            <Directory {...props} setStatusBarColor={setStatusBarColor} />
           )}
         </Stack.Screen>
       </Stack.Navigator>

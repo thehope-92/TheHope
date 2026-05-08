@@ -95,10 +95,19 @@ const Home = () => {
     return null;
   }, [analytics]);
 
-  const AnalyticsCard = ({ title, value, icon, color, subText, children }) => (
+  const AnalyticsCard = ({
+    title,
+    value,
+    icon,
+    color,
+    subText,
+    children,
+    onPress,
+  }) => (
     <TouchableOpacity
       activeOpacity={0.9}
       style={[styles.glassCard, { borderLeftColor: color, borderLeftWidth: 5 }]}
+      onPress={onPress}
     >
       <View style={styles.cardHeader}>
         <View style={[styles.iconBox, { backgroundColor: color + '20' }]}>
@@ -159,6 +168,7 @@ const Home = () => {
             icon="check-circle-outline"
             color="#4ADE80"
             subText={`${stats?.completed || 0}/${stats?.total || 0} Done`}
+            onPress={() => navigation.navigate('Habits')}
           >
             <View style={styles.progressContainer}>
               <View style={[styles.progressCircle, { borderColor: '#4ADE80' }]}>
@@ -175,6 +185,7 @@ const Home = () => {
             icon={latestMood?.icon || 'emoticon-outline'}
             color={latestMood?.color || '#60A5FA'}
             subText={`Intensity: ${latestMood?.avgIntensity || 0}/5`}
+
           >
             <View style={styles.moodMiniChart}>
               {[1, 2, 3, 4, 5].map(step => (
@@ -202,7 +213,11 @@ const Home = () => {
           style={styles.yogaScroll}
         >
           {allGuides.map((guide, index) => (
-            <TouchableOpacity key={index} style={styles.yogaCard}>
+            <TouchableOpacity
+              key={index}
+              style={styles.yogaCard}
+              onPress={() => navigation.navigate('YogaGuide')}
+            >
               <View style={styles.yogaIconCircle}>
                 <MaterialCommunityIcons
                   name="meditation"
