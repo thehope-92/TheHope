@@ -1,97 +1,145 @@
-This is a new [**React Native**](https://reactnative.dev) project, bootstrapped using [`@react-native-community/cli`](https://github.com/react-native-community/cli).
+# Hope User Mobile App 📱
 
-# Getting Started
+**Hope** is a comprehensive wellness and mental health mobile application designed to help users build positive habits, track their mood, explore yoga practices, and access valuable wellness content — all in one beautifully crafted experience.
 
-> **Note**: Make sure you have completed the [Set Up Your Environment](https://reactnative.dev/docs/set-up-your-environment) guide before proceeding.
+---
 
-## Step 1: Start Metro
+## ✨ Features
 
-First, you will need to run **Metro**, the JavaScript build tool for React Native.
+- **Authentication System**
 
-To start the Metro dev server, run the following command from the root of your React Native project:
+  - Secure Sign Up, Sign In, and Forgot Password flows
 
-```sh
-# Using npm
-npm start
+- **Personal Dashboard**
 
-# OR using Yarn
-yarn start
+  - Centralized home for quick access to all modules
+
+- **Habit Tracker**
+
+  - Create, manage, and monitor daily habits
+
+- **Mood Tracker**
+
+  - Log daily moods with analytics and insights
+
+- **Yoga Guide**
+
+  - Browse yoga categories, detailed guides, and routines
+
+- **Information Library (Articles)**
+
+  - Curated wellness and mental health articles with categories
+
+- **Profile Management**
+
+  - Personal settings, account details, and preferences
+
+- **Onboarding Experience**
+  - Smooth and engaging first-time user journey
+
+---
+
+## 🛠️ Tech Stack
+
+- **Framework:** React Native (CLI)
+- **State Management:** Redux Toolkit + Redux Persist
+- **Navigation:** React Navigation
+- **UI Components:** Custom reusable components with clean styling
+- **Icons:** React Native Vector Icons
+- **Language:** JavaScript / JSX
+
+---
+
+## 📁 Project Structure
+
+```bash
+hope-user/
+├── src/
+│   ├── assets/                    # Images, animations & placeholders
+│   │   ├── logo/
+│   │   ├── navigatorIcons/
+│   │   ├── onboarding/
+│   │   └── placeHolder/
+│   ├── constants/
+│   │   └── categories/
+│   ├── navigation/                # Navigation setup
+│   │   ├── bottom-navigator/
+│   │   ├── AppNavigator.jsx
+│   │   └── RootNavigator.jsx
+│   ├── redux/                     # Global state management
+│   │   ├── config/
+│   │   ├── slices/
+│   │   └── store/
+│   ├── screens/                   # All application screens
+│   │   ├── articles-screen/
+│   │   ├── auth/
+│   │   ├── dashboard/
+│   │   ├── habit-screen/
+│   │   ├── mood-tracker-screen/
+│   │   ├── onboarding-screen/
+│   │   ├── profile-screen/
+│   │   ├── splash-screen/
+│   │   └── yoga-guide-screen/
+│   ├── styles/                    # Global styles & themes
+│   └── utilities/                 # Reusable components & hooks
+│       └── custom-components/
+├── App.jsx
+├── index.js
+├── package.json
+├── .env
+└── README.md
 ```
 
-## Step 2: Build and run your app
+---
 
-With Metro running, open a new terminal window/pane from the root of your React Native project, and use one of the following commands to build and run your Android or iOS app:
+## 🚀 Installation & Setup
 
-### Android
+Make sure you have the [React Native development environment](https://reactnative.dev/docs/environment-setup) set up.
 
-```sh
-# Using npm
-npm run android
+```bash
+# 1. Clone the repository
+git clone <https://github.com/zain100000/The_Hope.git>
+cd hope-user
 
-# OR using Yarn
-yarn android
+# 2. Install dependencies
+npm install
+# or
+yarn install
+
+# 3. Run the app
+npx react-native run-android
+# or
+npx react-native run-ios
 ```
 
-### iOS
+---
 
-For iOS, remember to install CocoaPods dependencies (this only needs to be run on first clone or after updating native deps).
+## 📌 Key Modules
 
-The first time you create a new project, run the Ruby bundler to install CocoaPods itself:
+| Module        | Description                            |
+| ------------- | -------------------------------------- |
+| Auth          | Login, Signup, Password Recovery       |
+| Dashboard     | Main home screen                       |
+| Habit Tracker | Build and track personal habits        |
+| Mood Tracker  | Daily mood logging & insights          |
+| Yoga Guide    | Yoga poses, routines & categories      |
+| Articles      | Wellness content & information library |
+| Profile       | User settings and account management   |
 
-```sh
-bundle install
-```
+---
 
-Then, and every time you update your native dependencies, run:
+## 🎨 Design Philosophy
 
-```sh
-bundle exec pod install
-```
+Hope focuses on **simplicity, calmness, and mindfulness** in its design — helping users feel supported on their wellness journey.
 
-For more information, please visit [CocoaPods Getting Started guide](https://guides.cocoapods.org/using/getting-started.html).
+---
 
-```sh
-# Using npm
-npm run ios
+## 📄 License
 
-# OR using Yarn
-yarn ios
-```
+This project is part of the **Hope Wellness Platform**.
 
-If everything is set up correctly, you should see your new app running in the Android Emulator, iOS Simulator, or your connected device.
+---
 
-This is one way to run your app — you can also build it directly from Android Studio or Xcode.
+**Built with ❤️ for mental wellness, mindfulness, and personal growth.**
 
-## Step 3: Modify your app
-
-Now that you have successfully run the app, let's make changes!
-
-Open `App.tsx` in your text editor of choice and make some changes. When you save, your app will automatically update and reflect these changes — this is powered by [Fast Refresh](https://reactnative.dev/docs/fast-refresh).
-
-When you want to forcefully reload, for example to reset the state of your app, you can perform a full reload:
-
-- **Android**: Press the <kbd>R</kbd> key twice or select **"Reload"** from the **Dev Menu**, accessed via <kbd>Ctrl</kbd> + <kbd>M</kbd> (Windows/Linux) or <kbd>Cmd ⌘</kbd> + <kbd>M</kbd> (macOS).
-- **iOS**: Press <kbd>R</kbd> in iOS Simulator.
-
-## Congratulations! :tada:
-
-You've successfully run and modified your React Native App. :partying_face:
-
-### Now what?
-
-- If you want to add this new React Native code to an existing application, check out the [Integration guide](https://reactnative.dev/docs/integration-with-existing-apps).
-- If you're curious to learn more about React Native, check out the [docs](https://reactnative.dev/docs/getting-started).
-
-# Troubleshooting
-
-If you're having issues getting the above steps to work, see the [Troubleshooting](https://reactnative.dev/docs/troubleshooting) page.
-
-# Learn More
-
-To learn more about React Native, take a look at the following resources:
-
-- [React Native Website](https://reactnative.dev) - learn more about React Native.
-- [Getting Started](https://reactnative.dev/docs/environment-setup) - an **overview** of React Native and how setup your environment.
-- [Learn the Basics](https://reactnative.dev/docs/getting-started) - a **guided tour** of the React Native **basics**.
-- [Blog](https://reactnative.dev/blog) - read the latest official React Native **Blog** posts.
-- [`@facebook/react-native`](https://github.com/facebook/react-native) - the Open Source; GitHub **repository** for React Native.
+---
