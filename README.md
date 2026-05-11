@@ -140,7 +140,7 @@ npx react-native run-android
 ## 🔗 API Integration
 
 - The **Super Admin** and **Mobile App** both connect to the **Hope Backend**.
-- Base URL: `http://localhost:5000/api` (configurable via `.env`)
+- Base URL: `http://localhost:8000/api` (configurable via `.env`)
 
 ---
 
