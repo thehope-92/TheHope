@@ -15,10 +15,19 @@
  */
 
 const CONFIG = {
-  /** Dev Backend API Url */
-  // BACKEND_API_URL: 'http://192.168.1.8:8000/api',
-  /** Prod Backend API Url */
-  BACKEND_API_URL: 'https://the-hope-backend.vercel.app/api',
+
+  /** 
+  1- open cmd or powershell  
+  2- type ipconfig
+  3- navigate below and copy ipv4 address
+  4- paste your ipv4 address in place of 192.168.1.8 below
+  */
+
+  /** For localhost Backend API Url */
+  BACKEND_API_URL: 'http://192.168.1.8:8000/api',
+  
+  /** For Live Production Backend API Url */
+  // BACKEND_API_URL: 'https://the-hope-backend.vercel.app/api',
 };
 
 export default CONFIG;
