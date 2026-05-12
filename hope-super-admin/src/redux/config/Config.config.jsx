@@ -13,11 +13,11 @@
  */
 
 const CONFIG = {
-  /** Dev Backend API Url */
-  // BACKEND_API_URL: "http://localhost:8000/api",
+  /** For localhost Backend API Url */
+  BACKEND_API_URL: "http://localhost:8000/api",
 
-  /** Prod Backend API Url */
-  BACKEND_API_URL: "https://the-hope-backend.vercel.app/api",
+  /** For Live Production Backend API Url */
+  // BACKEND_API_URL: "https://the-hope-backend.vercel.app/api",
 };
 
 export default CONFIG;
